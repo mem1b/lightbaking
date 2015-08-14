@@ -7,7 +7,7 @@ The aim of this project is to provide light baking functionality for [THREE.js W
 This project handles everything from UV mapping to baking the light for the whole scene with Path Tracing and filter the maps to get a smooth result even with lower resolution maps.
 
 ```html
-This build is stable up to THREE.js ~r71
+This build is stable up to THREE.js r71
 ```
 
 ## Features (+ [Example](http://mem1b.github.com/lightbaking))
@@ -22,16 +22,16 @@ This build is stable up to THREE.js ~r71
 * Integration in the [three.js editor](http://threejs.org/editor/)
 * Web Worker functionality
 
-## Recommendation
+## Recommendations
 Works best with Google Chrome >=44
+(Mozilla and IE seems to have some issues while using our worker)
 
 ## Usage
-
 Download the following scripts:
-*Mandatory [script](https://github.com/mem1b/lightbaking/blob/master/js/lightBaking.js)
-*Optional for using workers[script](https://github.com/mem1b/lightbaking/blob/master/js/lightBakingWorker.js)
-*Optional for import/export[script](https://github.com/Stuk/jszip/blob/master/dist/jszip.min.js)
-*Optional for import/export[script](https://github.com/Stuk/jszip-utils/blob/master/dist/jszip-utils.min.js)
+* Mandatory [script](https://github.com/mem1b/lightbaking/blob/master/js/lightBaking.js)
+* Optional for using workers[script](https://github.com/mem1b/lightbaking/blob/master/js/lightBakingWorker.js)
+* Optional for import/export[script](https://github.com/Stuk/jszip/blob/master/dist/jszip.min.js)
+* Optional for import/export[script](https://github.com/Stuk/jszip-utils/blob/master/dist/jszip-utils.min.js)
 
 Include them in your html after the [THREE.js WebGL library](http://mrdoob.github.com/three.js/).
 
@@ -56,7 +56,7 @@ lightBaking = new THREE.LightBaking({
  )};
 ```
 
-#### Initialize (all Parameters with default Values are listed)
+#### Initialize (all parameters with default values are listed)
 
 ```html
 lightBaking = new THREE.LightBaking( {
@@ -136,6 +136,16 @@ From developer Console:
 lightBaking.exportLightMaps()
 ```
 
+#### Editor
+To add our baking solution to the three.js editor you need to add the [Sidebar.LightBaking.js](https://github.com/mem1b/lightbaking/blob/master/js/Sidebar.LightBaking.js) into the editor/js folder.
+And in the index.html file it's necessary to add following files:
+```html
+<script src="../../js/LightBaking.js"></script>
+<script src="../../js/packer.growing.js"></script>
+...
+<script src="js/Sidebar.LightBaking.js"></script>
+...
+```
 
 
 
