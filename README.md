@@ -28,8 +28,8 @@ Works best with Google Chrome >=44
 
 ## Usage
 Download the following scripts:
-* Mandatory [script](https://github.com/mem1b/lightbaking/tree/master/js/lightBaking.js)
-* Optional for using workers [script](https://github.com/mem1b/lightbaking/tree/master/js/lightBakingWorker.js)
+* Mandatory [script](https://github.com/mem1b/lightbaking/tree/master/js/LightBaking.js)
+* Optional for using workers [script](https://github.com/mem1b/lightbaking/tree/master/js/LightBakingWorker.js)
 * Optional for import/export [script](https://github.com/Stuk/jszip/blob/master/dist/jszip.min.js)
 * Optional for import/export [script](https://github.com/Stuk/jszip-utils/tree/master/dist/jszip-utils.min.js)
 
