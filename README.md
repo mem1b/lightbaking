@@ -10,7 +10,7 @@ This project handles everything from UV mapping to baking the light for the whol
 This build is stable for THREE.js r71
 ```
 
-## Features (+ [Live Example](http://web.fhnw.ch/technik/projekte/i/bachelor15/tschudy-link/index.html))
+## Features
 
 * Distortion free UV mapping
 * Optimizing UV layout with bin packing from [Code inComplete](http://codeincomplete.com/posts/2011/5/7/bin_packing/)
@@ -28,10 +28,10 @@ Works best with Google Chrome >=44
 
 ## Usage
 Download the following scripts:
-* Mandatory [script](https://github.com/mem1b/lightbaking/blob/master/js/lightBaking.js)
-* Optional for using workers [script](https://github.com/mem1b/lightbaking/blob/master/js/lightBakingWorker.js)
+* Mandatory [script](https://github.com/mem1b/lightbaking/tree/master/js/lightBaking.js)
+* Optional for using workers [script](https://github.com/mem1b/lightbaking/tree/master/js/lightBakingWorker.js)
 * Optional for import/export [script](https://github.com/Stuk/jszip/blob/master/dist/jszip.min.js)
-* Optional for import/export [script](https://github.com/Stuk/jszip-utils/blob/master/dist/jszip-utils.min.js)
+* Optional for import/export [script](https://github.com/Stuk/jszip-utils/tree/master/dist/jszip-utils.min.js)
 
 Include them in your html after the [THREE.js WebGL library](http://mrdoob.github.com/three.js/).
 
@@ -137,7 +137,7 @@ lightBaking.exportLightMaps()
 ```
 
 #### Editor
-To add our baking solution to the three.js editor you need to add the [Sidebar.LightBaking.js](https://github.com/mem1b/lightbaking/blob/master/js/Sidebar.LightBaking.js) into the editor/js folder.
+To add our baking solution to the three.js editor you need to add the [Sidebar.LightBaking.js](https://github.com/mem1b/lightbaking/tree/master/js/Sidebar.LightBaking.js) into the editor/js folder.
 In addition, include the following files in the editors index.html:
 ```html
 <script src="../../js/LightBaking.js"></script>
@@ -146,7 +146,6 @@ In addition, include the following files in the editors index.html:
 <script src="js/Sidebar.LightBaking.js"></script>
 ...
 ```
-
 
 
 ---
