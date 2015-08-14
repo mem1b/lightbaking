@@ -20,6 +20,7 @@ This build is stable up to THREE.js ~r71
 * Import and Export
 * Integration in three.js
 * Integration in the [three.js editor](http://threejs.org/editor/)
+* Web Worker functionality
 
 ## Recommendation
 Works best with Google Chrome >=44
