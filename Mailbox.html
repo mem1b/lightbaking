@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGL/Three.js Step Tutorial</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #fff;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<!-- End Shaders -->
+<script src="js/three.js"></script>
+<script src="js/Octree.js"></script>
+<script src="js/jszip.min.js"></script>
+<script src="js/jszip-utils.js"></script>
+<script src="js/LightBaking.js"></script>
+<script src="js/packer.growing.js"></script>
+<script src="js/TrackballControls.js"></script>
+
+<script>
+    "use strict";
+
+    var camera;
+    var scene;
+    var renderer;
+    var controls;
+    var thickness = 0.25;
+    var height = 12;
+    var width = 10;
+    var length = 10;
+    var lightBaking;
+
+    init();
+    animate();
+
+
+    function init() {
+
+        // SCENE
+        scene = new THREE.Scene();
+
+        // MESHES
+        createScene();
+
+        // CONTROLS
+        controls = new THREE.TrackballControls( camera );
+
+        controls.rotateSpeed = 1.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+
+        controls.noZoom = false;
+        controls.noPan = false;
+
+        controls.staticMoving = true;
+        controls.dynamicDampingFactor = 0.3;
+
+        controls.keys = [ 65, 83, 68 ];
+
+        controls.addEventListener( 'change', render );
+
+        // RENDERER
+        renderer = new THREE.WebGLRenderer();
+        renderer.setClearColor( 0xffffff );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        document.body.appendChild( renderer.domElement );
+
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
+        render();
+    }
+
+
+    function createScene() {
+
+        // CAMERA
+        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+        camera.position.z = -4;
+        camera.position.y = 0;
+
+        var light = new THREE.PointLight( 0xFFFFFF, 1.0 );
+        light.userData.radius = 2;
+        light.position.set( 0, 3, 7 );
+        light.physicalAttenuation = true;
+        scene.add( light );
+
+        var grp = new THREE.Group();
+
+        // TOP
+        var g_sphere1 = new THREE.BoxGeometry( 5, 0.2, 5 );
+        var material1 = new THREE.MeshBasicMaterial();
+        material1.side = THREE.DoubleSide;
+        material1.color.setRGB( 0.5, 0.5, 0.5 );
+        material1.lightMapIntensity = 1;
+        var m_sphere1 = new THREE.Mesh( g_sphere1, material1 );
+        m_sphere1.translateX( 0 );
+        m_sphere1.translateY( 1 );
+        m_sphere1.translateZ( 0 );
+
+        grp.add( m_sphere1 );
+
+//         WALL LEFT
+        var g_sphere1 = new THREE.BoxGeometry( 0.2, 2, 5 );
+        var material1 = new THREE.MeshBasicMaterial();
+        material1.side = THREE.DoubleSide;
+        material1.color.setRGB( 0.5, 0.5, 0.5 );
+        material1.lightMapIntensity = 1;
+        var m_sphere1 = new THREE.Mesh( g_sphere1, material1 );
+        m_sphere1.translateX( 2.5 );
+        m_sphere1.translateY( 0 );
+        m_sphere1.translateZ( 0 );
+
+        grp.add( m_sphere1 );
+
+        // WALL RIGHT
+        var g_sphere1 = new THREE.BoxGeometry( 0.2, 2, 5 );
+        var material1 = new THREE.MeshBasicMaterial();
+        material1.side = THREE.DoubleSide;
+        material1.color.setRGB( 0.5, 0.5, 0.5 );
+        material1.lightMapIntensity = 1;
+        var m_sphere1 = new THREE.Mesh( g_sphere1, material1 );
+        m_sphere1.translateX( -2.5 );
+        m_sphere1.translateY( 0 );
+        m_sphere1.translateZ( 0 );
+
+        grp.add( m_sphere1 );
+
+        // FRONT WALL
+        var g_sphere1 = new THREE.BoxGeometry( 5, 1, 0.2 );
+        var material1 = new THREE.MeshBasicMaterial();
+        material1.side = THREE.DoubleSide;
+        material1.color.setRGB( 0.5, 0.5, 0.5 );
+        material1.lightMapIntensity = 1;
+        var m_sphere1 = new THREE.Mesh( g_sphere1, material1 );
+        m_sphere1.translateX( 0 );
+        m_sphere1.translateY( -0.5 );
+        m_sphere1.translateZ( 2.5 );
+        grp.add( m_sphere1 );
+
+        // BOTTOM
+        var g_sphere1 = new THREE.BoxGeometry( 5, 0.2, 5 );
+        var material1 = new THREE.MeshBasicMaterial();
+        material1.side = THREE.DoubleSide;
+        material1.color.setRGB( 1, 0, 0 );
+        material1.lightMapIntensity = 1;
+        var m_sphere1 = new THREE.Mesh( g_sphere1, material1 );
+        m_sphere1.translateX( 0 );
+        m_sphere1.translateY( -1 );
+        m_sphere1.translateZ( 0 );
+        m_sphere1.userData.baking = { intersectMe: true };
+        grp.add( m_sphere1 );
+
+        scene.add( grp );
+
+        bakeScene();
+    }
+
+    function animate() {
+        requestAnimationFrame( animate );
+        controls.update();
+    }
+
+    function render() {
+        if ( renderer !== undefined ) {
+            renderer.render( scene, camera );
+        }
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        controls.handleResize();
+        render();
+    }
+
+
+    function bakeScene() {
+
+        /*
+        lightBaking = new THREE.LightBaking( { scene: scene } );
+        lightBaking.importLightMaps( "baked/Briefkasten.zip" ); */
+
+
+
+         lightBaking = new THREE.LightBaking( {
+
+         "debugText": true,
+
+         "textureWidth": 512,
+         "textureHeight": 512,
+
+         "uvMethod": THREE.cLightBaking.UVMethodEnum.PACKED,
+
+         "appMode": THREE.cLightBaking.ApplicationExecutionEnum.MULTITHREADED,
+         "bakingMethod": THREE.cLightBaking.BakingMethodEnum.PATHTRACING,
+         "pathTracingSamples": 3,
+         "pathTracingRecLevel": 0,
+         "giIntensity": 2,
+
+
+         "shading": THREE.cLightBaking.ShadingEnum.FLAT,
+
+         "softShadows": false,
+
+         "postProcessingFilter": THREE.cLightBaking.FilterEnum.NONE,
+
+         "scene": scene
+         } );
+
+         lightBaking.run( function () {
+         lightBaking.setOnMeshBaked( function () {
+
+         lightBaking.log( "setOnMeshBaked() called - & calling render()" );
+         render();
+
+         } );
+         } );
+
+
+
+    }
+
+
+</script>
+
+
+</body>
+</html>
