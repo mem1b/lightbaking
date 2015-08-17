@@ -34,7 +34,7 @@ var workerCtx = (function () {
 
                 break;
 
-            case THREE.cLightBaking.WorkerTaskEnum.MESH:
+            case THREE.LightBaking.WorkerTaskEnum.MESH:
 
                 lightBaking.setWorkerId( workerId );
                 lightBaking.incWorkerTaskId();
@@ -43,7 +43,7 @@ var workerCtx = (function () {
 
                 break;
 
-            case THREE.cLightBaking.WorkerTaskEnum.FACE:
+            case THREE.LightBaking.WorkerTaskEnum.FACE:
 
                 lightBaking.setWorkerId( workerId );
                 lightBaking.incWorkerTaskId();
@@ -89,7 +89,7 @@ var workerCtx = (function () {
         var config = JSON.parse( evt.data.bakingConfigJSON );
 
         // must be defined before importScene(), otherwise Octree would be unknown
-        if ( config.raycasterImplementation === THREE.cLightBaking.RayCasterEnum.OCTREE ) {
+        if ( config.raycasterImplementation === THREE.LightBaking.RayCasterEnum.OCTREE ) {
 
             importScripts( "Octree.js" );
 
@@ -100,12 +100,12 @@ var workerCtx = (function () {
         sceneRef = scene;
 
         // adjust some attributes to work properly in worker
-        config.appMode = THREE.cLightBaking.ApplicationExecutionEnum.SINGLETHREADED;
-        config.specificMeshBaking = THREE.cLightBaking.SpecificMeshBakingEnum.ENABLED;
+        config.appMode = THREE.LightBaking.ApplicationExecutionEnum.SINGLETHREADED;
+        config.specificMeshBaking = THREE.LightBaking.SpecificMeshBakingEnum.ENABLED;
         config.workerId = evt.data.workerId;
         config.scene = scene;
 
-        if ( config.uvMethod === THREE.cLightBaking.UVMethodEnum.PACKED ) {
+        if ( config.uvMethod === THREE.LightBaking.UVMethodEnum.PACKED ) {
 
             importScripts( "packer.growing.js" );
 
@@ -124,19 +124,19 @@ var workerCtx = (function () {
             self.postMessage( {
 
                 workerId: workerId,
-                intent: THREE.cLightBaking.WorkerTaskEnum.FINISHED
+                intent: THREE.LightBaking.WorkerTaskEnum.FINISHED
 
             } );
 
         } );
 
-        if ( config.workerTaskMode === THREE.cLightBaking.WorkerTaskEnum.MESH ) {
+        if ( config.workerTaskMode === THREE.LightBaking.WorkerTaskEnum.MESH ) {
 
             lightBaking.setOnMeshBaked( ownPostMessage );
 
         }
 
-        if ( config.postProcessingFilter !== THREE.cLightBaking.FilterEnum.NONE ) {
+        if ( config.postProcessingFilter !== THREE.LightBaking.FilterEnum.NONE ) {
 
             lightBaking.setOnFilterOnTextureApplied( ownPostMessage );
 

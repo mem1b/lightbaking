@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WebGL/Three.js Step Tutorial</title>
+    <title>Baked Cornell Box Textured</title>
     <style>
         body {
-            margin: 0;
-            background-color: #fff;
+            font-family: Monospace;
+            background-color: #f0f0f0;
+            margin: 0px;
             overflow: hidden;
         }
     </style>
@@ -19,6 +20,7 @@
 <script src="../js/LightBaking.js"></script>
 <script src="../js/packer.growing.js"></script>
 <script src="../js/TrackballControls.js"></script>
+<script src="../js/LightBakingDemo.js"></script>
 
 <script>
     "use strict";
@@ -179,9 +181,6 @@
         rightMaterial.map = texture;
         leftMaterial.map = texture;
 
-        bakeScene();
-
-
     }
 
     function animate() {
@@ -208,39 +207,27 @@
         lightBaking = new THREE.LightBaking( {
             "debugText": true,
 
-            "textureWidth": 1024,
-            "textureHeight": 1024,
+            "textureWidth": 512,
+            "textureHeight": 512,
 
-            "uvMethod": THREE.cLightBaking.UVMethodEnum.PACKED,
+            "uvMethod": THREE.LightBaking.UVMethodEnum.PACKED,
 
-            "raycasterImplementation": THREE.cLightBaking.RayCasterEnum.THREEJS,
-
-            "appMode": THREE.cLightBaking.ApplicationExecutionEnum.MULTITHREADED,
-            "bakingMethod": THREE.cLightBaking.BakingMethodEnum.PATHTRACING,
+            "workerSource": "../js/LightBakingWorker.js",
+            "appMode": THREE.LightBaking.ApplicationExecutionEnum.MULTITHREADED,
+            "bakingMethod": THREE.LightBaking.BakingMethodEnum.PATHTRACING,
             "samples": 20,
-            "twoPassPassCount": 2,
             "pathTracingRecLevel": 2,
             "giIntensity": 5,
 
-            "shading": THREE.cLightBaking.ShadingEnum.PHONG,
+            "shading": THREE.LightBaking.ShadingEnum.PHONG,
 
             "softShadows": true,
 
-            "postProcessingFilter": THREE.cLightBaking.FilterEnum.NONE,
+            "postProcessingFilter": THREE.LightBaking.FilterEnum.NONE,
 
             "scene": scene
         } );
-
-
-        lightBaking.setOnMeshBaked( function () {
-
-            lightBaking.log( "setOnMeshBaked() called - & calling render()" );
-            render();
-
-        } );
-
-
-        lightBaking.run();
+        lightBaking.run(lightBakingDemo.lightBakingRun);
 
     }
 

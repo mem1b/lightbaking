@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WebGL/Three.js Step Tutorial</title>
+    <title>Baked Colored Lights</title>
     <style>
         body {
-            margin: 0;
-            background-color: #fff;
+            font-family: Monospace;
+            background-color: #f0f0f0;
+            margin: 0px;
             overflow: hidden;
         }
     </style>
@@ -19,6 +20,9 @@
 <script src="../js/LightBaking.js"></script>
 <script src="../js/packer.growing.js"></script>
 <script src="../js/TrackballControls.js"></script>
+<script src="../js/LightBakingDemo.js"></script>
+
+
 
 <script>
     "use strict";
@@ -33,9 +37,9 @@
     var length = 10;
     var lightBaking;
 
+
     init();
     animate();
-
 
     function init() {
 
@@ -43,7 +47,7 @@
         scene = new THREE.Scene();
 
         // CAMERA
-        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
         camera.position.z = 13;
         camera.position.y = 0;
 //        camera.up = new THREE.Vector3(0,1,0);
@@ -55,42 +59,40 @@
         var pz = 0;
 
         var rad = 1;
-        var light = new THREE.PointLight( 0xFF0000, 1.0 );
-        light.position.set( px, py, pz );
+        var light = new THREE.PointLight(0xFF0000, 1.0);
+        light.position.set(px, py, pz);
         light.userData.radius = rad;
-        scene.add( light );
+        scene.add(light);
 
-        var l1 = new THREE.SphereGeometry( rad, 8, 8 );
-        var m1 = new THREE.Mesh( l1, new THREE.MeshBasicMaterial( { color: 0xFF0000 } ) );
-        m1.translateX( px );
-        m1.translateY( py );
-        m1.translateZ( pz );
-        m1.userData.baking = { bakeMe: false, intersectMe: false };
-        scene.add( m1 );
+        var l1 = new THREE.SphereGeometry(rad, 8, 8);
+        var m1 = new THREE.Mesh(l1, new THREE.MeshBasicMaterial({color: 0xFF0000}));
+        m1.translateX(px);
+        m1.translateY(py);
+        m1.translateZ(pz);
+        m1.userData.baking = {bakeMe: false, intersectMe: false};
+        scene.add(m1);
 
-        var light2 = new THREE.PointLight( 0x00FF00, 1.0 );
-        light2.position.set( -px, py, pz );
+        var light2 = new THREE.PointLight(0x00FF00, 1.0);
+        light2.position.set(-px, py, pz);
         light2.width = 10;
         light2.height = 1;
         light2.userData.radius = rad;
-        scene.add( light2 );
+        scene.add(light2);
 
-        var l1 = new THREE.SphereGeometry( rad, 8, 8 );
-        var m1 = new THREE.Mesh( l1, new THREE.MeshBasicMaterial( { color: 0x00FF00 } ) );
-        m1.translateX( -px );
-        m1.translateY( py );
-        m1.translateZ( pz );
-        m1.userData.baking = { bakeMe: false, intersectMe: false };
-        scene.add( m1 );
+        var l1 = new THREE.SphereGeometry(rad, 8, 8);
+        var m1 = new THREE.Mesh(l1, new THREE.MeshBasicMaterial({color: 0x00FF00}));
+        m1.translateX(-px);
+        m1.translateY(py);
+        m1.translateZ(pz);
+        m1.userData.baking = {bakeMe: false, intersectMe: false};
+        scene.add(m1);
 
 
         // MESHES
         createScene();
 
-        bakeScene();
-
         // CONTROLS
-        controls = new THREE.TrackballControls( camera );
+        controls = new THREE.TrackballControls(camera);
 
         controls.rotateSpeed = 1.0;
         controls.zoomSpeed = 1.2;
@@ -102,19 +104,19 @@
         controls.staticMoving = true;
         controls.dynamicDampingFactor = 0.3;
 
-        controls.keys = [ 65, 83, 68 ];
+        controls.keys = [65, 83, 68];
 
-        controls.addEventListener( 'change', render );
+        controls.addEventListener('change', render);
 
         // RENDERER
         renderer = new THREE.WebGLRenderer();
-        renderer.setClearColor( 0xffffff );
-        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setClearColor(0xffffff);
+        renderer.setSize(window.innerWidth, window.innerHeight);
 
-        document.body.appendChild( renderer.domElement );
+        document.body.appendChild(renderer.domElement);
 
 
-        window.addEventListener( 'resize', onWindowResize, false );
+        window.addEventListener('resize', onWindowResize, false);
 
         render();
     }
@@ -124,86 +126,81 @@
         var white = 0.75;
 
         var boxMaterial = new THREE.MeshBasicMaterial();
-        boxMaterial.color.setRGB( white, white, white );
+        boxMaterial.color.setRGB(white, white, white);
         var box2Material = new THREE.MeshBasicMaterial();
-        box2Material.color.setRGB( white, white, white );
+        box2Material.color.setRGB(white, white, white);
 
         //floor
-        var box1 = new THREE.BoxGeometry( 0.2, 5, 5 );
-        var m_box1 = new THREE.Mesh( box1, boxMaterial );
-        m_box1.translateX( -1.1 );
-        m_box1.translateY( -2 );
-        m_box1.userData.baking = { bakeMe: true, intersectMe: true };
-        scene.add( m_box1 );
+        var box1 = new THREE.BoxGeometry(0.2, 5, 5);
+        var m_box1 = new THREE.Mesh(box1, boxMaterial);
+        m_box1.translateX(-1.1);
+        m_box1.translateY(-2);
+        m_box1.userData.baking = {bakeMe: true, intersectMe: true};
+        scene.add(m_box1);
 
         //floor
-        var box1 = new THREE.BoxGeometry( 0.2, 5, 5 );
-        var m_box1 = new THREE.Mesh( box1, box2Material );
-        m_box1.translateX( 1.1 );
-        m_box1.translateY( -2 );
-        m_box1.userData.baking = { bakeMe: true, intersectMe: true };
-        scene.add( m_box1 );
+        var box1 = new THREE.BoxGeometry(0.2, 5, 5);
+        var m_box1 = new THREE.Mesh(box1, box2Material);
+        m_box1.translateX(1.1);
+        m_box1.translateY(-2);
+        m_box1.userData.baking = {bakeMe: true, intersectMe: true};
+        scene.add(m_box1);
 
     }
 
-
     function animate() {
-        requestAnimationFrame( animate );
+        requestAnimationFrame(animate);
         controls.update();
     }
 
     function render() {
-        if ( renderer !== undefined ) {
-            renderer.render( scene, camera );
+        if (renderer !== undefined) {
+            renderer.render(scene, camera);
         }
     }
 
     function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setSize(window.innerWidth, window.innerHeight);
         controls.handleResize();
         render();
     }
 
     function bakeScene() {
 
-        lightBaking = new THREE.LightBaking( {
+        lightBaking = THREE.LightBaking({
             "debugText": true,
 
-            "textureWidth": 128,
-            "textureHeight": 128,
+            "textureWidth": 256,
+            "textureHeight": 256,
 
-            "uvMethod": THREE.cLightBaking.UVMethodEnum.PACKED,
+            "uvMethod": THREE.LightBaking.UVMethodEnum.PACKED,
 
-            "raycasterImplementation": THREE.cLightBaking.RayCasterEnum.THREEJS,
-
-            "appMode": THREE.cLightBaking.ApplicationExecutionEnum.MULTITHREADED,
-            "bakingMethod": THREE.cLightBaking.BakingMethodEnum.PATHTRACING,
-            "samples": 1,
-            "twoPassPassCount": 2,
-            "pathTracingRecLevel": 1,
+            "workerSource": "../js/LightBakingWorker.js",
+            "appMode": THREE.LightBaking.ApplicationExecutionEnum.MULTITHREADED,
+            "bakingMethod": THREE.LightBaking.BakingMethodEnum.PATHTRACING,
+            "samples": 20,
+            "pathTracingRecLevel": 3,
             "giIntensity": 2,
 
-            "shading": THREE.cLightBaking.ShadingEnum.PHONG,
+            "shading": THREE.LightBaking.ShadingEnum.PHONG,
 
             "softShadows": true,
 
-            "postProcessingFilter": THREE.cLightBaking.FilterEnum.NONE,
+            "postProcessingFilter": THREE.LightBaking.FilterEnum.NONE,
 
-            "specificMeshBaking": THREE.cLightBaking.SpecificMeshBakingEnum.ENABLED,
-            "specificRayCasting": THREE.cLightBaking.SpecificRayCastingEnum.ENABLED,
+            "specificMeshBaking": THREE.LightBaking.SpecificMeshBakingEnum.ENABLED,
+            "specificRayCasting": THREE.LightBaking.SpecificRayCastingEnum.ENABLED,
 
             "scene": scene
-        } );
-
-        lightBaking.run();
+        });
+        lightBaking.run(lightBakingDemo.lightBakingRun);
 
     }
 
 
 </script>
-
 
 </body>
 </html>

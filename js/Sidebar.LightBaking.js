@@ -19,7 +19,6 @@ Sidebar.LightBaking = function ( editor ) {
         var selops = new UI.Select().setOptions( options ).setWidth( params.selopWidth ).onChange( function () {
 
             editor.config.setKey( params.path, this.getValue() );
-            updateRenderer();
 
         } );
 
@@ -55,20 +54,20 @@ Sidebar.LightBaking = function ( editor ) {
     container.add( new UI.Break() );
 
     var appModeTypes = {
-        'Single Thread': THREE.cLightBaking.ApplicationExecutionEnum.SINGLETHREADED,
-        'Asynchronous': THREE.cLightBaking.ApplicationExecutionEnum.SINGLETHREADED,
-        'Multi Threaded': THREE.cLightBaking.ApplicationExecutionEnum.MULTITHREADED
+        'Single Thread': THREE.LightBaking.ApplicationExecutionEnum.SINGLETHREADED,
+        'Asynchronous': THREE.LightBaking.ApplicationExecutionEnum.SINGLETHREADED,
+        'Multi Threaded': THREE.LightBaking.ApplicationExecutionEnum.MULTITHREADED
     };
 
     var bakingMethodTypes = {
-        'Path Tracing': THREE.cLightBaking.BakingMethodEnum.PATHTRACING,
-        'Two Pass Method': THREE.cLightBaking.BakingMethodEnum.TWOPASS,
+        'Path Tracing': THREE.LightBaking.BakingMethodEnum.PATHTRACING,
+        'Two Pass Method': THREE.LightBaking.BakingMethodEnum.TWOPASS,
     };
 
     var shadingTypes = {
-        'Flat': THREE.cLightBaking.ShadingEnum.FLAT,
-        'Phong': THREE.cLightBaking.ShadingEnum.PHONG,
-        'FlatFastMethod': THREE.cLightBaking.ShadingEnum.FLATFAST,
+        'Flat': THREE.LightBaking.ShadingEnum.FLAT,
+        'Phong': THREE.LightBaking.ShadingEnum.PHONG,
+        'FlatFastMethod': THREE.ightBaking.ShadingEnum.FLATFAST,
     };
 
     var softshadowTypes = {
@@ -77,14 +76,14 @@ Sidebar.LightBaking = function ( editor ) {
     };
 
     var uvMethodTypes = {
-        'Uniform': THREE.cLightBaking.UVMethodEnum.UNIFORMCENTERED,
-        'Packed': THREE.cLightBaking.UVMethodEnum.PACKED,
+        'Uniform': THREE.LightBaking.UVMethodEnum.UNIFORMCENTERED,
+        'Packed': THREE.LightBaking.UVMethodEnum.PACKED,
     };
 
     var filterTypes = {
-        'None': THREE.cLightBaking.FilterEnum.NONE,
-        'Gauss': THREE.cLightBaking.FilterEnum.GAUSS,
-        'Box': THREE.cLightBaking.FilterEnum.BOX,
+        'None': THREE.LightBaking.FilterEnum.NONE,
+        'Gauss': THREE.LightBaking.FilterEnum.GAUSS,
+        'Box': THREE.LightBaking.FilterEnum.BOX,
     };
 
     addSelectOptions( {
@@ -229,6 +228,9 @@ Sidebar.LightBaking = function ( editor ) {
 
                 document.title = "Mesh " + baked++ + " Baked";
 
+                // TODO force udpate!
+                //updateRenderer();
+
             } );
 
             lightBaking.setAfterExecuted( function () {
@@ -242,14 +244,6 @@ Sidebar.LightBaking = function ( editor ) {
     } );
 
     container.add( runButton );
-
-    //
-
-    function updateRenderer() {
-
-        signals.rendererChanged.dispatch( rendererType.getValue(), rendererAntialias.getValue() );
-
-    }
 
     return container;
 
