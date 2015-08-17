@@ -22,6 +22,13 @@ This build is stable for THREE.js r71
 * Integration in the [three.js editor](http://threejs.org/editor/)
 * Web Worker functionality
 
+## Examples
+
+* [Cornell Box](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/CornellBox.html)
+* [Cornell Box with Wall-Texture](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/CornellBox_Textured.html)
+* [Colored Lights](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/ColoredLights.html)
+* [Mailbox](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/Mailbox.html)
+
 ## Recommendations
 Works best with Google Chrome >=44
 (Mozilla and IE seems to have some issues while using our workers)
