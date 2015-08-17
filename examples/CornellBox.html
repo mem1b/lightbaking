@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGL/Three.js Step Tutorial</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #fff;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<script src="../js/three.js"></script>
+<script src="../js/Octree.js"></script>
+<script src="../js/jszip.min.js"></script>
+<script src="../js/jszip-utils.js"></script>
+<script src="../js/LightBaking.js"></script>
+<script src="../js/packer.growing.js"></script>
+<script src="../js/TrackballControls.js"></script>
+
+<script>
+    "use strict";
+
+    var camera;
+    var scene;
+    var renderer;
+    var controls;
+    var thickness = 0.25;
+    var height = 12;
+    var width = 10;
+    var length = 10;
+    var lightBaking;
+
+    init();
+    animate();
+
+
+    function init() {
+
+        // SCENE
+        scene = new THREE.Scene();
+
+        // MESHES
+        createScene();
+
+        // CONTROLS
+        controls = new THREE.TrackballControls( camera );
+
+        controls.rotateSpeed = 1.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+
+        controls.noZoom = false;
+        controls.noPan = false;
+
+        controls.staticMoving = true;
+        controls.dynamicDampingFactor = 0.3;
+
+        controls.keys = [ 65, 83, 68 ];
+
+        controls.addEventListener( 'change', render );
+
+        // RENDERER
+        renderer = new THREE.WebGLRenderer();
+        renderer.setClearColor( 0xffffff );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        document.body.appendChild( renderer.domElement );
+
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
+        render();
+    }
+
+    function createScene() {
+
+        // CAMERA
+        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+        camera.position.z = 20;
+        camera.position.y = 15;
+
+        // LIGHT
+
+         var light = new THREE.AreaLight( 0xFFFFFF, 1.0 );
+         light.position.set( 0, 9, 0 );
+         light.width = 10;
+         light.height = 1;
+         light.userData.radius = 2;
+         scene.add( light );
+
+        /*
+        var light = new THREE.PointLight( 0xFFFFFF, 1.0 );
+        light.userData.radius = 2;
+        light.position.set( 0, 3, 7 );
+        light.physicalAttenuation = true;
+        scene.add( light );
+        */
+
+        var white = 0.75;
+
+        var boxMaterial = new THREE.MeshBasicMaterial();
+        boxMaterial.color.setRGB( white, white, white );
+        var lightMaterial = new THREE.MeshBasicMaterial();
+        lightMaterial.color.setRGB( white, white, white );
+        var floorMaterial = new THREE.MeshBasicMaterial();
+        floorMaterial.color.setRGB( white, white, white );
+        var ceilingMaterial = new THREE.MeshBasicMaterial();
+        ceilingMaterial.color.setRGB( white, white, white );
+        var backMaterial = new THREE.MeshBasicMaterial();
+        backMaterial.color.setRGB( white, white, white );
+        var leftMaterial = new THREE.MeshBasicMaterial();
+        //leftMaterial.color.setRGB( 1, 0, 0 );
+        leftMaterial.color.setRGB( 1.0, 0.3, 0.1 );
+        var rightMaterial = new THREE.MeshBasicMaterial();
+        //rightMaterial.color.setRGB( 0, 0, 1 );
+        rightMaterial.color.setRGB( 0.1, 0.5, 1.0 );
+        //rightMaterial.color.setHex( 0x2194ce );
+
+        //floor
+        var g_floor = new THREE.BoxGeometry( width, thickness, length );
+        var m_floor = new THREE.Mesh( g_floor, floorMaterial );
+        scene.add( m_floor );
+
+        //ceiling
+        var g_ceiling = new THREE.BoxGeometry( width, thickness, length );
+        var m_ceiling = new THREE.Mesh( g_ceiling, ceilingMaterial );
+        m_ceiling.translateY( height );
+        scene.add( m_ceiling );
+
+        //light
+        /*
+         var g_light = new THREE.BoxGeometry( width, 1, width );
+         var m_light = new THREE.Mesh( g_light, lightMaterial );
+         m_light.translateY( height - (thickness / 2) );
+         scene.add( m_light );
+         */
+
+        //back
+        var g_back = new THREE.BoxGeometry( width, height, thickness );
+        var m_back = new THREE.Mesh( g_back, backMaterial );
+        m_back.translateZ( -length / 2 );
+        m_back.translateY( height / 2 );
+        scene.add( m_back );
+
+        //left
+        var g_left = new THREE.BoxGeometry( thickness, height, length );
+        var m_left = new THREE.Mesh( g_left, leftMaterial );
+        m_left.translateX( -width / 2 );
+        m_left.translateY( height / 2 );
+        scene.add( m_left );
+
+        //right
+        var g_right = new THREE.BoxGeometry( thickness, height, length );
+        var m_right = new THREE.Mesh( g_right, rightMaterial );
+        m_right.translateX( width / 2 );
+        m_right.translateY( height / 2 );
+        scene.add( m_right );
+
+
+        //var ballMaterial = new THREE.MeshPhongMaterial({ specular: 0xffffff, shininess: 100 });
+        var ballMaterial = new THREE.MeshBasicMaterial();
+        ballMaterial.color.setRGB( white, white, white );
+
+        var g_dummyball = new THREE.SphereGeometry( 1.5, 8, 8 );
+        var m_dummyball = new THREE.Mesh( g_dummyball, ballMaterial );
+        m_dummyball.translateX( width / 3 );
+        m_dummyball.translateY( height / 4 );
+        scene.add( m_dummyball );
+
+
+        // Create dummybox
+        var g_dummybox = new THREE.BoxGeometry( 2.5, 5, 2.5 );
+        var m_dummybox = new THREE.Mesh( g_dummybox, boxMaterial );
+        m_dummybox.translateX( -width / 5 );
+        m_dummybox.translateY( 2.5 );
+        m_dummybox.rotateY( 1 );
+        m_dummybox.userData.baking = { bakeMe: true };
+        scene.add( m_dummybox );
+
+        bakeScene();
+
+    }
+
+    function animate() {
+        requestAnimationFrame( animate );
+        controls.update();
+    }
+
+    function render() {
+        if ( renderer !== undefined ) {
+            renderer.render( scene, camera );
+        }
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        controls.handleResize();
+        render();
+    }
+
+
+    function bakeScene() {
+
+        /*
+         lightBaking = new THREE.LightBaking( { scene: scene } );
+         lightBaking.importLightMaps( "foo.zip" );
+         */
+
+
+        lightBaking = new THREE.LightBaking( {
+            "debugText": true,
+
+            "textureWidth": 256,
+            "textureHeight": 256,
+
+            "uvMethod": THREE.cLightBaking.UVMethodEnum.PACKED,
+
+            "raycasterImplementation": THREE.cLightBaking.RayCasterEnum.THREEJS,
+
+            "appMode": THREE.cLightBaking.ApplicationExecutionEnum.MULTITHREADED,
+            "bakingMethod": THREE.cLightBaking.BakingMethodEnum.PATHTRACING,
+            "samples": 2,
+            "twoPassPassCount": 2,
+            "pathTracingRecLevel": 1,
+            "giIntensity": 5,
+
+            "shading": THREE.cLightBaking.ShadingEnum.PHONG,
+
+            "softShadows": true,
+
+            "postProcessingFilter": THREE.cLightBaking.FilterEnum.NONE,
+
+            "scene": scene
+        } );
+
+        lightBaking.run( function () {
+
+            lightBaking.setOnMeshBaked( function () {
+
+                lightBaking.log( "setOnMeshBaked() called - & calling render()" );
+                render();
+
+            } );
+
+        } );
+
+
+    }
+
+
+</script>
+
+
+</body>
+</html>

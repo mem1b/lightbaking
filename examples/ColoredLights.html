@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGL/Three.js Step Tutorial</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #fff;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<script src="../js/three.js"></script>
+<script src="../js/Octree.js"></script>
+<script src="../js/jszip.min.js"></script>
+<script src="../js/jszip-utils.js"></script>
+<script src="../js/LightBaking.js"></script>
+<script src="../js/packer.growing.js"></script>
+<script src="../js/TrackballControls.js"></script>
+
+<script>
+    "use strict";
+
+    var camera;
+    var scene;
+    var renderer;
+    var controls;
+    var thickness = 0.25;
+    var height = 12;
+    var width = 10;
+    var length = 10;
+    var lightBaking;
+
+    init();
+    animate();
+
+
+    function init() {
+
+        // SCENE
+        scene = new THREE.Scene();
+
+        // CAMERA
+        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+        camera.position.z = 13;
+        camera.position.y = 0;
+//        camera.up = new THREE.Vector3(0,1,0);
+
+        // LIGHT
+
+        var px = 3;
+        var py = 2;
+        var pz = 0;
+
+        var rad = 1;
+        var light = new THREE.PointLight( 0xFF0000, 1.0 );
+        light.position.set( px, py, pz );
+        light.userData.radius = rad;
+        scene.add( light );
+
+        var l1 = new THREE.SphereGeometry( rad, 8, 8 );
+        var m1 = new THREE.Mesh( l1, new THREE.MeshBasicMaterial( { color: 0xFF0000 } ) );
+        m1.translateX( px );
+        m1.translateY( py );
+        m1.translateZ( pz );
+        m1.userData.baking = { bakeMe: false, intersectMe: false };
+        scene.add( m1 );
+
+        var light2 = new THREE.PointLight( 0x00FF00, 1.0 );
+        light2.position.set( -px, py, pz );
+        light2.width = 10;
+        light2.height = 1;
+        light2.userData.radius = rad;
+        scene.add( light2 );
+
+        var l1 = new THREE.SphereGeometry( rad, 8, 8 );
+        var m1 = new THREE.Mesh( l1, new THREE.MeshBasicMaterial( { color: 0x00FF00 } ) );
+        m1.translateX( -px );
+        m1.translateY( py );
+        m1.translateZ( pz );
+        m1.userData.baking = { bakeMe: false, intersectMe: false };
+        scene.add( m1 );
+
+
+        // MESHES
+        createScene();
+
+        bakeScene();
+
+        // CONTROLS
+        controls = new THREE.TrackballControls( camera );
+
+        controls.rotateSpeed = 1.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+
+        controls.noZoom = false;
+        controls.noPan = false;
+
+        controls.staticMoving = true;
+        controls.dynamicDampingFactor = 0.3;
+
+        controls.keys = [ 65, 83, 68 ];
+
+        controls.addEventListener( 'change', render );
+
+        // RENDERER
+        renderer = new THREE.WebGLRenderer();
+        renderer.setClearColor( 0xffffff );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        document.body.appendChild( renderer.domElement );
+
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
+        render();
+    }
+
+    function createScene() {
+
+        var white = 0.75;
+
+        var boxMaterial = new THREE.MeshBasicMaterial();
+        boxMaterial.color.setRGB( white, white, white );
+        var box2Material = new THREE.MeshBasicMaterial();
+        box2Material.color.setRGB( white, white, white );
+
+        //floor
+        var box1 = new THREE.BoxGeometry( 0.2, 5, 5 );
+        var m_box1 = new THREE.Mesh( box1, boxMaterial );
+        m_box1.translateX( -1.1 );
+        m_box1.translateY( -2 );
+        m_box1.userData.baking = { bakeMe: true, intersectMe: true };
+        scene.add( m_box1 );
+
+        //floor
+        var box1 = new THREE.BoxGeometry( 0.2, 5, 5 );
+        var m_box1 = new THREE.Mesh( box1, box2Material );
+        m_box1.translateX( 1.1 );
+        m_box1.translateY( -2 );
+        m_box1.userData.baking = { bakeMe: true, intersectMe: true };
+        scene.add( m_box1 );
+
+    }
+
+
+    function animate() {
+        requestAnimationFrame( animate );
+        controls.update();
+    }
+
+    function render() {
+        if ( renderer !== undefined ) {
+            renderer.render( scene, camera );
+        }
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        controls.handleResize();
+        render();
+    }
+
+    function bakeScene() {
+
+        lightBaking = new THREE.LightBaking( {
+            "debugText": true,
+
+            "textureWidth": 128,
+            "textureHeight": 128,
+
+            "uvMethod": THREE.cLightBaking.UVMethodEnum.PACKED,
+
+            "raycasterImplementation": THREE.cLightBaking.RayCasterEnum.THREEJS,
+
+            "appMode": THREE.cLightBaking.ApplicationExecutionEnum.MULTITHREADED,
+            "bakingMethod": THREE.cLightBaking.BakingMethodEnum.PATHTRACING,
+            "samples": 1,
+            "twoPassPassCount": 2,
+            "pathTracingRecLevel": 1,
+            "giIntensity": 2,
+
+            "shading": THREE.cLightBaking.ShadingEnum.PHONG,
+
+            "softShadows": true,
+
+            "postProcessingFilter": THREE.cLightBaking.FilterEnum.NONE,
+
+            "specificMeshBaking": THREE.cLightBaking.SpecificMeshBakingEnum.ENABLED,
+            "specificRayCasting": THREE.cLightBaking.SpecificRayCastingEnum.ENABLED,
+
+            "scene": scene
+        } );
+
+        lightBaking.run();
+
+    }
+
+
+</script>
+
+
+</body>
+</html>
