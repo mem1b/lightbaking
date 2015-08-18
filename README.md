@@ -24,13 +24,23 @@ This build is stable for THREE.js r71
 
 ## Examples
 
+Live Examples:
 * [Cornell Box](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/CornellBox.html)
 * [Colored Lights](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/ColoredLights.html)
 * [Mailbox](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/Mailbox.html)
 
+Pictures:
+* [Cornell Box](http://web.fhnw.ch/technik/projekte/i/bachelor15/tschudy-link/img/cornell_algorithm.png)
+* [Cornell Box Ball Lightmap](http://web.fhnw.ch/technik/projekte/i/bachelor15/tschudy-link/img/uvpacking.png)
+* [Cornell Box Textures](http://web.fhnw.ch/technik/projekte/i/bachelor15/tschudy-link/img/cornellbox_walltexture.png)
+* [Mailbox](http://web.fhnw.ch/technik/projekte/i/bachelor15/tschudy-link/img/mailbox.png)
+* [Editor integration](http://web.fhnw.ch/technik/projekte/i/bachelor15/tschudy-link/img/editor.png)
+* [Concave Object](http://web.fhnw.ch/technik/projekte/i/bachelor15/tschudy-link/img/concaveObj.png)
+
+
 ## Recommendations
-Works best with Google Chrome >=44
-(Mozilla and IE seems to have some issues while using our workers)
+* Webserver eg node.js, phpstorm etc.
+* Chrome 44 (Mozilla and IE seems to have some issues while using our workers)
 
 ## Usage
 Download the following scripts:
@@ -62,7 +72,7 @@ lightBaking = THREE.LightBaking({
  )};
 ```
 
-#### Initialize
+#### Parameter description
 All Parameters are listed with their default values.
 
 ```html
@@ -186,6 +196,14 @@ lightBaking = THREE.LightBaking( {
 
 } );
 ```
+
+#### Most common parameters:
+* to get a smooth/flat shading use: shading & ShadingEnum.Flat or ShadingEnum.PHONG
+* to get rid of seams use: packingOffset and/or uvSmoothing and set a higher texture width/height
+* to get indirect lighting use: samples > 0 rec level > 1
+* to get softshadows use: softshadows: true
+* to achieve a brighter lightmap: set giIntensity >= 2
+* to improve the pathtracing quality: the more samples the better the quality
 
 #### Import Scene
 ```html
