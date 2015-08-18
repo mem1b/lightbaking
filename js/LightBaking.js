@@ -34,7 +34,7 @@
 
         // handle parameters
         parameters = parameters || {};
-        parse(parameters, defConfig);
+        _config = parse(parameters, defConfig);
 
         __scene = parameters.scene;
 
@@ -90,7 +90,6 @@
         return {
 
             toJSON: toJSON,
-            parse: parse,
             createFaceVertexLightMapUv: createFaceVertexLightMapUv,
             setOnMeshBaked: setOnMeshBaked,
             setOnFilterOnTextureApplied: setOnFilterOnTextureApplied,
@@ -114,6 +113,8 @@
 
     // globally visble functions/constants
     (function () {
+
+        THREE.LightBaking.parse = parse;
 
         THREE.LightBaking.getDefaultConfig = getDefaultConfig;
 
