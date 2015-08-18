@@ -30,11 +30,11 @@
     //-----------------------------------------------//
     THREE.LightBaking = function (parameters) {
 
-        _config = getDefaultConfig();
+        var defConfig = getDefaultConfig();
 
         // handle parameters
         parameters = parameters || {};
-        parse(parameters);
+        parse(parameters, defConfig);
 
         __scene = parameters.scene;
 
@@ -107,82 +107,86 @@
             incWorkerTaskId: incWorkerTaskId,
             getMeshesToBakeCount: getMeshesToBakeCount,
 
-            getDefaultConfig: getDefaultConfig,
-
             log: log
         };
 
     };
 
-    // someConstants
-    // Interpolation techniques
-    THREE.LightBaking.ShadingEnum = {
-        FLAT: 0,
-        PHONG: 1,
-        FLATFAST: 2
-    };
+    // globally visble functions/constants
+    (function () {
 
-    // Illumination models
-    THREE.LightBaking.IlluminationModelEnum = {
-        LAMBERT: 0
-    };
+        THREE.LightBaking.getDefaultConfig = getDefaultConfig;
 
-    // Run the Application in: TODO
-    THREE.LightBaking.ApplicationExecutionEnum = {
-        SINGLETHREADED: 0,  // everything in the main ui thread
-        ASYNC: 1,           // execute async
-        MULTITHREADED: 2    // webworker!
-    };
+        // someConstants
+        // Interpolation techniques
+        THREE.LightBaking.ShadingEnum = {
+            FLAT: 0,
+            PHONG: 1,
+            FLATFAST: 2
+        };
 
-    // BakingMethod
-    THREE.LightBaking.BakingMethodEnum = {
-        TWOPASS: 0,            // a own implemented method
-        PATHTRACING: 1
-    };
+        // Illumination models
+        THREE.LightBaking.IlluminationModelEnum = {
+            LAMBERT: 0
+        };
 
-    // UV Method
-    THREE.LightBaking.UVMethodEnum = {
-        UNIFORMUNCENTERED: 0,
-        UNIFORMCENTERED: 1,
-        PACKED: 2
-    };
+        // Run the Application in: TODO
+        THREE.LightBaking.ApplicationExecutionEnum = {
+            SINGLETHREADED: 0,  // everything in the main ui thread
+            ASYNC: 1,           // execute async
+            MULTITHREADED: 2    // webworker!
+        };
 
-    // Available Filters (has to be a function)
-    THREE.LightBaking.FilterEnum = {
-        NONE: "noFilter",
-        BOX: "boxFilter",
-        GAUSS: "gaussFilter"
-    };
+        // BakingMethod
+        THREE.LightBaking.BakingMethodEnum = {
+            TWOPASS: 0,            // a own implemented method
+            PATHTRACING: 1
+        };
 
-    THREE.LightBaking.WorkerTaskEnum = {
-        MESH: "Mesh",
-        FACE: "Face", // not yset supported!
-        FINISHED: "Finished" // internally for communication
-    };
+        // UV Method
+        THREE.LightBaking.UVMethodEnum = {
+            UNIFORMUNCENTERED: 0,
+            UNIFORMCENTERED: 1,
+            PACKED: 2
+        };
 
-    // -1 = default(bake all)
-    //  0 = bake all which have bakeMe = true(bake only these)
-    //  1 = bakeMe True (ignore these to bake)
-    THREE.LightBaking.SpecificMeshBakingEnum = {
-        DISABLED: -1,
-        ENABLED: 0,
-        INVERTED: 1
-    };
+        // Available Filters (has to be a function)
+        THREE.LightBaking.FilterEnum = {
+            NONE: "noFilter",
+            BOX: "boxFilter",
+            GAUSS: "gaussFilter"
+        };
 
-    // -1 = default(raycast all)
-    //  0 = raycast all which have intersectMe === True(only intersect these)
-    //  1 = intersectMe === True (ignore these to intersect)
-    THREE.LightBaking.SpecificRayCastingEnum = {
-        DISABLED: -1,
-        ENABLED: 0,
-        INVERTED: 1
-    };
+        THREE.LightBaking.WorkerTaskEnum = {
+            MESH: "Mesh",
+            FACE: "Face", // not yset supported!
+            FINISHED: "Finished" // internally for communication
+        };
 
-    THREE.LightBaking.RayCasterEnum = {
-        THREEJS: 0,
-        OCTREE: 1
-    };
+        // -1 = default(bake all)
+        //  0 = bake all which have bakeMe = true(bake only these)
+        //  1 = bakeMe True (ignore these to bake)
+        THREE.LightBaking.SpecificMeshBakingEnum = {
+            DISABLED: -1,
+            ENABLED: 0,
+            INVERTED: 1
+        };
 
+        // -1 = default(raycast all)
+        //  0 = raycast all which have intersectMe === True(only intersect these)
+        //  1 = intersectMe === True (ignore these to intersect)
+        THREE.LightBaking.SpecificRayCastingEnum = {
+            DISABLED: -1,
+            ENABLED: 0,
+            INVERTED: 1
+        };
+
+        THREE.LightBaking.RayCasterEnum = {
+            THREEJS: 0,
+            OCTREE: 1
+        };
+
+    })();
 
     var _config;
 
@@ -314,8 +318,8 @@
             twoPassPassCount: 2,
 
             // PathTracing (minimum settings(only direct light))
-            samples: 5,
-            pathTracingRecLevel: 2,
+            samples: 1,
+            pathTracingRecLevel: 0,
 
             //ray direction
             importanceValue: 1,
@@ -368,67 +372,71 @@
      * Mainly used to export settings to worker
      * @param input
      */
-    function parse(input) {
+    function parse(input, defVal) {
 
-        _config.debugText = (typeof input.debugText === "undefined") ? _config.debugText : input.debugText;
-        _config.debugLightmap = (typeof input.debugLightmap === "undefined") ? _config.debugLightmap : input.debugLightmap;
-        _config.debugVisual = (typeof input.debugVisual === "undefined") ? _config.debugVisual : input.debugVisual;
-        _config.debugVisualMeshNbr = (typeof input.debugVisualMeshNbr === "undefined") ? _config.debugVisualMeshNbr : input.debugVisualMeshNbr;
-        _config.debugVisualProbabilityFilter = (typeof input.debugVisualProbabilityFilter === "undefined") ? _config.debugVisualProbabilityFilter : input.debugVisualProbabilityFilter;
-        _config.globalAmbient = (typeof input.globalAmbient === "undefined") ? _config.globalAmbient : input.globalAmbient;
-        _config.textureWidth = (typeof input.textureWidth === "undefined") ? _config.textureWidth : input.textureWidth;
-        _config.textureHeight = (typeof input.textureHeight === "undefined") ? _config.textureHeight : input.textureHeight;
-        _config.uvSmoothing = (typeof input.uvSmoothing === "undefined") ? _config.uvSmoothing : input.uvSmoothing;
-        _config.debugVisualIsSelectedMesh = (typeof input.debugVisualIsSelectedMesh === "undefined") ? _config.debugVisualIsSelectedMesh : input.debugVisualIsSelectedMesh;
-        _config.debugVisualRT = (typeof input.debugVisualRT === "undefined") ? _config.debugVisualRT : input.debugVisualRT;
-        _config.debugColorizeUVOffset = (typeof input.debugColorizeUVOffset === "undefined") ? _config.debugColorizeUVOffset : input.debugColorizeUVOffset;
+        return {
 
-        _config.appMode = (typeof input.appMode === "undefined") ? _config.appMode : input.appMode;
+            debugText: (typeof input.debugText === "undefined") ? defVal.debugText : input.debugText,
+            debugLightmap: (typeof input.debugLightmap === "undefined") ? defVal.debugLightmap : input.debugLightmap,
+            debugVisual: (typeof input.debugVisual === "undefined") ? defVal.debugVisual : input.debugVisual,
+            debugVisualMeshNbr: (typeof input.debugVisualMeshNbr === "undefined") ? defVal.debugVisualMeshNbr : input.debugVisualMeshNbr,
+            debugVisualProbabilityFilter: (typeof input.debugVisualProbabilityFilter === "undefined") ? defVal.debugVisualProbabilityFilter : input.debugVisualProbabilityFilter,
+            globalAmbient: (typeof input.globalAmbient === "undefined") ? defVal.globalAmbient : input.globalAmbient,
+            textureWidth: (typeof input.textureWidth === "undefined") ? defVal.textureWidth : input.textureWidth,
+            textureHeight: (typeof input.textureHeight === "undefined") ? defVal.textureHeight : input.textureHeight,
+            uvSmoothing: (typeof input.uvSmoothing === "undefined") ? defVal.uvSmoothing : input.uvSmoothing,
+            debugVisualIsSelectedMesh: (typeof input.debugVisualIsSelectedMesh === "undefined") ? defVal.debugVisualIsSelectedMesh : input.debugVisualIsSelectedMesh,
+            debugVisualRT: (typeof input.debugVisualRT === "undefined") ? defVal.debugVisualRT : input.debugVisualRT,
+            debugColorizeUVOffset: (typeof input.debugColorizeUVOffset === "undefined") ? defVal.debugColorizeUVOffset : input.debugColorizeUVOffset,
 
-        // Shading Technique
-        _config.shading = (typeof input.shading === "undefined") ? _config.shading : input.shading;
-        // Illumination Model
-        _config.illuminationModel = (typeof input.illuminationModel === "undefined") ? _config.illuminationModel : input.illuminationModel;
+            appMode: (typeof input.appMode === "undefined") ? defVal.appMode : input.appMode,
 
-        // UV
-        _config.uvMethod = (typeof input.uvMethod === "undefined") ? _config.uvMethod : input.uvMethod;
-        _config.packingOffset = (typeof input.packingOffset === "undefined") ? _config.packingOffset : input.packingOffset;
+            // Shading Technique
+            shading: (typeof input.shading === "undefined") ? defVal.shading : input.shading,
+            // Illumination Model
+            illuminationModel: (typeof input.illuminationModel === "undefined") ? defVal.illuminationModel : input.illuminationModel,
 
-        _config.bakingMethod = (typeof input.bakingMethod === "undefined") ? _config.bakingMethod : input.bakingMethod;
+            // UV
+            uvMethod: (typeof input.uvMethod === "undefined") ? defVal.uvMethod : input.uvMethod,
+            packingOffset: (typeof input.packingOffset === "undefined") ? defVal.packingOffset : input.packingOffset,
 
-        _config.asyncMeshDelay = (typeof input.asyncMeshDelay === "undefined") ? _config.asyncMeshDelay : input.asyncMeshDelay;
+            bakingMethod: (typeof input.bakingMethod === "undefined") ? defVal.bakingMethod : input.bakingMethod,
 
-        // (samples / hits) * giIntensity (for our gi method)
-        _config.giIntensity = (typeof input.giIntensity === "undefined") ? _config.giIntensity : input.giIntensity;
-        _config.twoPassPassCount = (typeof input.twoPassPassCount === "undefined") ? _config.twoPassPassCount : input.twoPassPassCount;
+            asyncMeshDelay: (typeof input.asyncMeshDelay === "undefined") ? defVal.asyncMeshDelay : input.asyncMeshDelay,
 
-        // PathTracing (minimum settings(only direct light))
-        _config.samples = (typeof input.samples === "undefined") ? _config.samples : input.samples;
-        _config.pathTracingRecLevel = (typeof input.pathTracingRecLevel === "undefined") ? _config.pathTracingRecLevel : input.pathTracingRecLevel;
+            // (samples / hits) * giIntensity (for our gi method)
+            giIntensity: (typeof input.giIntensity === "undefined") ? defVal.giIntensity : input.giIntensity,
+            twoPassPassCount: (typeof input.twoPassPassCount === "undefined") ? defVal.twoPassPassCount : input.twoPassPassCount,
 
-        //importance Value
-        _config.importanceValue = (typeof input.importanceValue === "undefined") ? _config.importanceValue : 1;
-        // various
-        _config.specificMeshBaking = (typeof input.specificMeshBaking === "undefined") ? _config.specificMeshBaking : input.specificMeshBaking;
-        _config.specificRayCasting = (typeof input.specificRayCasting === "undefined") ? _config.specificRayCasting : input.specificRayCasting;
-        _config.raycasterPrecision = (typeof input.raycasterPrecision === "undefined") ? _config.raycasterPrecision : input.raycasterPrecision;
-        _config.raycasterImplementation = (typeof input.raycasterImplementation === "undefined") ? _config.raycasterImplementation : input.raycasterImplementation;
-        _config.lightAttenuation = (typeof input.lightAttenuation === "undefined") ? _config.lightAttenuation : input.lightAttenuation;
+            // PathTracing (minimum settings(only direct light))
+            samples: (typeof input.samples === "undefined") ? defVal.samples : input.samples,
+            pathTracingRecLevel: (typeof input.pathTracingRecLevel === "undefined") ? defVal.pathTracingRecLevel : input.pathTracingRecLevel,
 
-        // post processing
-        _config.postProcessingFilter = (typeof input.postProcessingFilter === "undefined") ? _config.postProcessingFilter : input.postProcessingFilter;
+            //importance Value
+            importanceValue: (typeof input.importanceValue === "undefined") ? defVal.importanceValue : 1,
+            // various
+            specificMeshBaking: (typeof input.specificMeshBaking === "undefined") ? defVal.specificMeshBaking : input.specificMeshBaking,
+            specificRayCasting: (typeof input.specificRayCasting === "undefined") ? defVal.specificRayCasting : input.specificRayCasting,
+            raycasterPrecision: (typeof input.raycasterPrecision === "undefined") ? defVal.raycasterPrecision : input.raycasterPrecision,
+            raycasterImplementation: (typeof input.raycasterImplementation === "undefined") ? defVal.raycasterImplementation : input.raycasterImplementation,
+            lightAttenuation: (typeof input.lightAttenuation === "undefined") ? defVal.lightAttenuation : input.lightAttenuation,
 
-        // softShadows
-        _config.softShadows = (typeof input.softShadows === "undefined") ? _config.softShadows : input.softShadows;
-        _config.softShadowSamples = (typeof input.softShadowSamples === "undefined") ? _config.softShadowSamples : input.softShadowSamples;
-        _config.softShadowIntensity = (typeof input.softShadowIntensity === "undefined") ? _config.softShadowIntensity : input.softShadowIntensity;
+            // post processing
+            postProcessingFilter: (typeof input.postProcessingFilter === "undefined") ? defVal.postProcessingFilter : input.postProcessingFilter,
 
-        // worker
-        _config.workerSource = (typeof input.workerSource === "undefined") ? _config.workerSource : input.workerSource;
-        _config.workerLimit = (typeof input.workerLimit === "undefined") ? _config.workerLimit : input.workerLimit;
-        _config.workerId = (typeof input.workerId === "undefined") ? _config.workerId : input.workerId;
+            // softShadows
+            softShadows: (typeof input.softShadows === "undefined") ? defVal.softShadows : input.softShadows,
+            softShadowSamples: (typeof input.softShadowSamples === "undefined") ? defVal.softShadowSamples : input.softShadowSamples,
+            softShadowIntensity: (typeof input.softShadowIntensity === "undefined") ? defVal.softShadowIntensity : input.softShadowIntensity,
 
-        _config.resetUserData = (typeof input.resetUserData === "undefined") ? _config.resetUserData : input.resetUserData;
+            // worker
+            workerSource: (typeof input.workerSource === "undefined") ? defVal.workerSource : input.workerSource,
+            workerLimit: (typeof input.workerLimit === "undefined") ? defVal.workerLimit : input.workerLimit,
+            workerId: (typeof input.workerId === "undefined") ? defVal.workerId : input.workerId,
+
+            resetUserData: (typeof input.resetUserData === "undefined") ? defVal.resetUserData : input.resetUserData
+
+        }
 
     }
 
@@ -4046,7 +4054,7 @@
                 switch (_config.shading) {
 
                     case THREE.LightBaking.ShadingEnum.FLAT:
-                    case THREE.LightBaking.ShadingEnum.FLAT:
+                    case THREE.LightBaking.ShadingEnum.FLATFAST:
 
                         calculatedSurfaceNormal.copy(normalizedSurfaceNormal);
 
