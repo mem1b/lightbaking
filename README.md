@@ -25,7 +25,6 @@ This build is stable for THREE.js r71
 ## Examples
 
 * [Cornell Box](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/CornellBox.html)
-* [Cornell Box with Wall-Texture](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/CornellBox_Textured.html)
 * [Colored Lights](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/ColoredLights.html)
 * [Mailbox](https://cdn.rawgit.com/mem1b/lightbaking/master/examples/Mailbox.html)
 
@@ -63,71 +62,127 @@ lightBaking = THREE.LightBaking({
  )};
 ```
 
-#### Initialize (all parameters with default values are listed)
+#### Initialize
+All Parameters are listed with their default values.
 
 ```html
 lightBaking = THREE.LightBaking( {
-         "scene"": scene  //mandatory
-         "debugText": false, //optional,
-         "debugLightmap": false, //optional,
-         "debugVisual": false, //optional, was only used for developing
-         "debugVisualMeshNbr": 0, //optional,was only used for developing
-         "debugVisualProbabilityFilter": 0.005, //optional, was only used for developing
-         "debugVisualIsSelectedMesh": false, //optional, was only used for developing
-         "debugVisualRT": false, //optional, was only used for developing
 
-         "giIntensity": 2, //optional, increase it to boost the brightness of the indirect rays
+         // Scene Information
+         // pass the scene object to the LightBaking plugin
+         "scene"": scene
 
-         "textureWidth": 512, //optional, global width of the lightmaps
-         "textureHeight": 512, //optional, global height of the lightmaps
+         // Application Execution Model
+         // Runs the application in the desired mode.
+         // - SINGLETHREADED: Everything is done in the main(ui)thread
+         // - ASYNC: Executed asynchronously(not really different to SINGLETHREADED)
+         // - MULTITHREADED: Using dedicated WebWorkers
+         "appMode": THREE.LightBaking.ApplicationExecutionEnum.MULTITHREADED,
 
-         // Shading Technique
-         "shading": THREE.LightBaking.ShadingEnum.PHONG, //optional PHONG, FLAT, FLATFAST
+         // (dedicated) Web Worker
+         // - workerSource:  only used if multithreading is enabled. Set the source of the LightBakingWorker.js file.
+         // - workerLimit: Maximal amount of worker
+         "workerSource": "js/LightBakingWorker.js",
+         "workerLimit": navigator.hardwareConcurrency,
 
-         // Illumination Model
-         "illuminationModel": THREE.LightBaking.IlluminationModelEnum.LAMBERT, //optional,LAMBERT  <- for extending with different models
+         // Debugging
+         // only used for developing purposes
+         // - debugText: get some insight which method was called
+         // - debugLightmap: same functionality as debugLightmaps() on THREE.LightBaking
+         "debugText": false,
+         "debugLightmap": false,
+         "debugVisual": false,
+         "debugVisualMeshNbr": 0,
+         "debugVisualProbabilityFilter": 0.005,
+         "debugVisualIsSelectedMesh": false
+         "debugVisualRT": false,
 
-         // UV
-         "uvMethod": THREE.LightBaking.UVMethodEnum.PACKED, // optional, 0 - first try, 1 - simple centered, 2 - bin packing approach
-         "packingOffset": 2, //optional, offset in pixels for the UV map
-         "uvSmoothing": 0.2, //optional, offset in percent for the inTriangle test used in baking
+         // Lightmap size
+         // Usually 2^x
+         "textureWidth": 512,
+         "textureHeight": 512,
 
-         "bakingMethod": THREE.LightBaking.BakingMethodEnum.LINK, //optional, algorithm used for baking TWOPASS/PATHTRACING
+         // Shading Techniques
+         // - PHONG
+         // - FLAT
+         // - FLATFAST (color determined by face vertices, and the whole face gets this color)
+         "shading": THREE.LightBaking.ShadingEnum.PHONG,
 
+         // Illumination Models
+         // Only Lambertian. Phong doesn't make sense in terms of lightbaking.
+         // - LAMBERT
+         "illuminationModel": THREE.LightBaking.IlluminationModelEnum.LAMBERT,
+
+         // UV related
+         // - uvMethod: optional, 0 - first try, 1 - simple centered, 2 - bin packing approach
+         // - packingOffset: optional, offset in pixels for the UV map
+         // - uvSmoothing: optional, offset in percent for the inTriangle test used in baking
+         "uvMethod": THREE.LightBaking.UVMethodEnum.PACKED,
+         "packingOffset": 2,
+         "uvSmoothing": 0.2,
+
+         // Light Baking algorithms
+         // used for baking TWOPASS/PATHTRACING
+         "bakingMethod": THREE.LightBaking.BakingMethodEnum.PATHTRACING,
 
          // TwoPass Method
-         "twoPassPassCount": 2,  //optional, number of passes for this method: 1 - direct light, 2-indirect light
+         // - twoPassCount: 1 - only direct light, 2 with indirect light
+         //   (more passes not possible)
+         "twoPassPassCount": 2,
 
-         // PathTracing (minimum settings(only direct light))
-         "samples": 5, //optional, number of sampels per texel
-         "pathTracingRecLevel": 2, //optional, number of max recursions in path tracing
+         // PathTracing Method (minimum settings(only direct light))
+         // - sampels: samples per lumel
+         // - pathTracingRecLevel: max recursion depth
+         "samples": 1,
+         "pathTracingRecLevel": 0,
 
-         //ray direction
-         "importanceValue":1, //optional, direction for the rays [0-1], 1==180° direction, 0=only in normal direction
+         // Ray direction
+         // how to integrate over the hemisphere
+         // direction for the rays [0-1],
+         //   0: only in normal direction
+         //   1: 180° direction(ideal diffuse)
+         "importanceValue":1,
 
-         // various
-         "specificMeshBaking": THREE.LightBaking.SpecificMeshBakingEnum.DISABLED, //optional used for enable/disable specific baking , ENABLED = default(bake all)  DISABLED = bake all which have userDate.baking.bakeMe = true(bake only these) INVERTED = bakeMe=True ignores these to bake)
-         "specificRayCasting": THREE.LightBaking.SpecificRayCastingEnum.DISABLED, //optional used for enable/disable ignoring objects, ENABLED = default(raycast all)  DISABLED = bake all which have userDate.baking.intersectMe = true(use only these fot intersection tests) INVERTED = intersectMe=True ignores these to intersect)
+         // specificMeshBaking
+         // Enable/disable specific baking
+         // - ENABLED = default(bake all)
+         // - DISABLED = bake all which have userDate.baking.bakeMe === true(bake only these)
+         // - INVERTED = bakeMe===True ignores these to bake)
+         "specificMeshBaking": THREE.LightBaking.SpecificMeshBakingEnum.DISABLED,
 
+         // specificRayCasting
+         //optional used for enable/disable ignoring objects,
+         // - ENABLED = default(raycast all)
+         // - DISABLED = bake all which have userDate.baking.intersectMe === true(use only these fot intersection tests)
+         // - INVERTED = intersectMe===True ignores these to intersect)
+         "specificRayCasting": THREE.LightBaking.SpecificRayCastingEnum.DISABLED,
 
-         "raycasterImplementation": THREE.LightBaking.RayCasterEnum.THREEJS,  //optional, THREEJS - use the three.js raycaster for intersection tests  <- for future extensions
-         "raycasterPrecision": 0.0001, //optional, set the raycaster precision. the lower the more precise
+         // Raycasting
+         // - raycasterImplementation: choose between threejs raycaster implementation and octree(threejs preferred atm!)
+         // - raycasterPrecision: set the raycaster precision. the lower the more precise
+         "raycasterImplementation": THREE.LightBaking.RayCasterEnum.THREEJS,
+         "raycasterPrecision": 0.0001,
 
          // softshadows
-         "softShadows": true, //optional, enable/disable soft shadows
-         "softShadowSamples": 1, //optional, number of shadow samples fot the TWOPASS method.
-         "softShadowIntensity": 1, //optional, used in direct light calculation, higher intensity results in brighter values
+         // - softShadows: enable/disable soft shadows
+         // - softShadowSamples: number of shadow samples fot the TWOPASS method.
+         // - softShadowIntensity: used in direct light calculation, higher intensity results in brighter values
+         "softShadows": true,
+         "softShadowSamples": 1,
+         "softShadowIntensity": 1,
 
-         "lightAttenuation": false, //optional, turn the light Attenuation for point lights on/off. Attenuation is derives from the standard point light attributes
+         // giIntensity
+         // increase it to boost the brightness of the indirect rays
+         "giIntensity": 2,
 
-         // post processing
-         "postProcessingFilter": THREE.LightBaking.FilterEnum.NONE, //optional, NONE/BOX/GAUSS, used to soften the lightmaps
+         // lightAttenuation
+         // - turn the light Attenuation for point lights on/off. Attenuation is derives from the standard point light attributes
+         "lightAttenuation": false,
 
-         // worker
-         "workerSource": "js/LightBakingWorker.js", //optional, only used if multithreading is enabled. Set the source of the LightBakingWorker.js file.
-         "workerLimit": navigator.hardwareConcurrency, //optional, default is the current max value.
-
-         "appMode": THREE.LightBaking.ApplicationExecutionEnum.MULTITHREADED //optional, SINGLETHREADED/ASYNC/MULTITHREADED
+         // Lightmaps post processing:
+         // applies an image processing filter onto the lightmap
+         // postProcessingFilter: NONE/BOX/GAUSS, used to soften the lightmaps
+         "postProcessingFilter": THREE.LightBaking.FilterEnum.NONE,
 
 } );
 ```
