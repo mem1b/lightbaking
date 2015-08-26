@@ -10,8 +10,8 @@
 
 "use strict";
 
-importScripts( "three.js" );
-importScripts( "LightBaking.js" );
+importScripts("three.js");
+importScripts("LightBaking.js");
 
 var workerCtx = (function () {
 
@@ -20,83 +20,83 @@ var workerCtx = (function () {
     var intent;
     var workerId;
 
-    function onMessage( e ) {
+    function onMessage(e) {
 
         intent = e.data.task.intent;
         workerId = e.data.workerId;
 
-        switch ( e.data.task.intent ) {
+        switch (e.data.task.intent) {
 
             case "Setup":
 
-                sceneSetup( e );
-                lightBaking.log( intent );
+                sceneSetup(e);
+                lightBaking.log(intent);
 
                 break;
 
             case THREE.LightBaking.WorkerTaskEnum.MESH:
 
-                lightBaking.setWorkerId( workerId );
+                lightBaking.setWorkerId(workerId);
                 lightBaking.incWorkerTaskId();
-                lightBaking.log( intent );
-                meshTask( e );
+                lightBaking.log(intent);
+                meshTask(e);
 
                 break;
 
             case THREE.LightBaking.WorkerTaskEnum.FACE:
 
-                lightBaking.setWorkerId( workerId );
+                lightBaking.setWorkerId(workerId);
                 lightBaking.incWorkerTaskId();
-                lightBaking.log( intent );
-                faceTask( e );
+                lightBaking.log(intent);
+                faceTask(e);
 
                 break;
 
             default :
 
-                self.console.log( intent + " not yet implemented." );
+                self.console.log(intent + " not yet implemented.");
                 break;
 
         }
 
     }
 
-    function faceTask( e ) {
+    function faceTask(e) {
 
     }
 
-    function meshTask( e ) {
+    function meshTask(e) {
 
         // only bake specific Mesh
-        sceneRef.traverse( function ( mesh ) {
+        sceneRef.traverse(function (mesh) {
 
-            if ( mesh instanceof THREE.Mesh ) {
+            if (mesh instanceof THREE.Mesh) {
 
                 mesh.userData.baking.bakeMe = ( mesh.uuid === e.data.task.uuid );
 
             }
 
-        } );
+        });
 
-        lightBaking.run( function () {
-            setListener( JSON.parse( lightBaking.toJSON() ) );
-        } );
+        lightBaking.run(function () {
+            setListener(JSON.parse(lightBaking.toJSON()));
+        });
     }
 
-    function sceneSetup( evt ) {
+    function sceneSetup(evt) {
 
         var scene;
-        var config = JSON.parse( evt.data.bakingConfigJSON );
+        var config = JSON.parse(evt.data.bakingConfigJSON);
 
         // must be defined before importScene(), otherwise Octree would be unknown
-        if ( config.raycasterImplementation === THREE.LightBaking.RayCasterEnum.OCTREE ) {
+        if (config.raycasterImplementation === THREE.LightBaking.RayCasterEnum.OCTREE) {
 
-            importScripts( "Octree.js" );
+            importScripts("Octree.js");
 
         }
 
         // reconstruct scene in worker
-        scene = importScene( evt );
+        scene = importScene(evt);
         sceneRef = scene;
 
         // adjust some attributes to work properly in worker
@@ -105,63 +105,63 @@ var workerCtx = (function () {
         config.workerId = evt.data.workerId;
         config.scene = scene;
 
-        if ( config.uvMethod === THREE.LightBaking.UVMethodEnum.PACKED ) {
+        if (config.uvMethod === THREE.LightBaking.UVMethodEnum.PACKED) {
 
-            importScripts( "packer.growing.js" );
+            importScripts("packer.growing.js");
 
         }
 
-        lightBaking = new THREE.LightBaking( config );
+        lightBaking = new THREE.LightBaking(config);
 
     }
 
-    function setListener( config ) {
+    function setListener(config) {
 
-        lightBaking.setAfterExecuted( function () {
+        lightBaking.setAfterExecuted(function () {
 
-            lightBaking.log( "afterExecuted() - send Finished to main thread." );
+            lightBaking.log("afterExecuted() - send Finished to main thread.");
 
-            self.postMessage( {
+            self.postMessage({
 
                 workerId: workerId,
                 intent: THREE.LightBaking.WorkerTaskEnum.FINISHED
 
-            } );
+            });
 
-        } );
+        });
 
-        if ( config.workerTaskMode === THREE.LightBaking.WorkerTaskEnum.MESH ) {
+        if (config.workerTaskMode === THREE.LightBaking.WorkerTaskEnum.MESH) {
 
-            lightBaking.setOnMeshBaked( ownPostMessage );
+            lightBaking.setOnMeshBaked(ownPostMessage);
 
         }
 
-        if ( config.postProcessingFilter !== THREE.LightBaking.FilterEnum.NONE ) {
+        if (config.postProcessingFilter !== THREE.LightBaking.FilterEnum.NONE) {
 
-            lightBaking.setOnFilterOnTextureApplied( ownPostMessage );
+            lightBaking.setOnFilterOnTextureApplied(ownPostMessage);
 
         }
 
     }
 
-    function ownPostMessage( mesh ) {
+    function ownPostMessage(mesh) {
 
-        lightBaking.log( "setOnMeshBaked() - postMessage, intent:" + intent );
+        lightBaking.log("setOnMeshBaked() - postMessage, intent:" + intent);
 
-        self.postMessage( {
+        self.postMessage({
 
             texBuf: mesh.material.lightMap.image.data,
-            uvLightmap: mesh.geometry.faceVertexUvs[ 1 ],
+            uvLightmap: mesh.geometry.faceVertexUvs[1],
             uvInfo: mesh.userData.baking.uvInfo,
             workerId: workerId,
             meshUUID: mesh.uuid,
             intent: intent
 
-        } );
+        });
 
     }
 
-    function importScene( evt ) {
+    function importScene(evt) {
 
         var scene;
         // JSONLoader?
@@ -171,17 +171,17 @@ var workerCtx = (function () {
 
         // ObjectLoader does not handle AreaLights atm.
         var loader = new THREE.ObjectLoader();
-        loader.parse( evt.data.sceneJSON, function ( obj ) {
+        loader.parse(evt.data.sceneJSON, function (obj) {
 
             var matrix = new THREE.Matrix4();
             var object;
 
             // ADD AREALIGHT!
-            evt.data.sceneJSON.object.children.forEach( function ( data ) {
+            evt.data.sceneJSON.object.children.forEach(function (data) {
 
-                if ( data.type === "AreaLight" ) {
+                if (data.type === "AreaLight") {
 
-                    object = new THREE.AreaLight( data.color, data.intensity );
+                    object = new THREE.AreaLight(data.color, data.intensity);
 
                     object.width = data.width;
                     object.height = data.height;
@@ -192,60 +192,60 @@ var workerCtx = (function () {
 
                     object.uuid = data.uuid;
 
-                    if ( data.name !== undefined ) {
+                    if (data.name !== undefined) {
 
                         object.name = data.name;
 
                     }
 
-                    if ( data.matrix !== undefined ) {
+                    if (data.matrix !== undefined) {
 
-                        matrix.fromArray( data.matrix );
-                        matrix.decompose( object.position, object.quaternion, object.scale );
+                        matrix.fromArray(data.matrix);
+                        matrix.decompose(object.position, object.quaternion, object.scale);
 
                     } else {
 
-                        if ( data.position !== undefined ) {
+                        if (data.position !== undefined) {
 
-                            object.position.fromArray( data.position );
-
-                        }
-
-                        if ( data.rotation !== undefined ) {
-
-                            object.rotation.fromArray( data.rotation );
+                            object.position.fromArray(data.position);
 
                         }
 
-                        if ( data.scale !== undefined ) {
+                        if (data.rotation !== undefined) {
 
-                            object.scale.fromArray( data.scale );
+                            object.rotation.fromArray(data.rotation);
+
+                        }
+
+                        if (data.scale !== undefined) {
+
+                            object.scale.fromArray(data.scale);
 
                         }
 
                     }
 
-                    if ( data.visible !== undefined ) {
+                    if (data.visible !== undefined) {
                         object.visible = data.visible;
                     }
-                    if ( data.userData !== undefined ) {
+                    if (data.userData !== undefined) {
                         object.userData = data.userData;
                     }
 
-                    obj.add( object );
+                    obj.add(object);
 
                 }
 
-            } );
+            });
 
-            evt.data.sceneJSON.materials.forEach( function ( data ) {
+            evt.data.sceneJSON.materials.forEach(function (data) {
 
-                if ( (data.type === "MeshBasicMaterial" || data.type === "MeshLambertMaterial" || data.type === "MeshPhongmaterial" ) && data.map !== undefined ) {
+                if ((data.type === "MeshBasicMaterial" || data.type === "MeshLambertMaterial" || data.type === "MeshPhongmaterial" ) && data.map !== undefined) {
 
                     obj.traverse(
-                        function ( mesh ) {
+                        function (mesh) {
 
-                            if ( mesh.material !== undefined && mesh.material.uuid === data.uuid) {
+                            if (mesh.material !== undefined && mesh.material.uuid === data.uuid) {
                                 mesh.material.map = data.map;
                             }
 
@@ -253,12 +253,12 @@ var workerCtx = (function () {
                     );
                 }
 
-            } );
+            });
 
 
             scene = obj;
 
-        } );
+        });
 
         return scene;
 
@@ -270,9 +270,9 @@ var workerCtx = (function () {
 
 })();
 
-self.onmessage = function ( e ) {
+self.onmessage = function (e) {
 
-    workerCtx.onMessage( e );
+    workerCtx.onMessage(e);
 
 };
 

@@ -434,6 +434,8 @@
             workerSource: (typeof input.workerSource === "undefined") ? defVal.workerSource : input.workerSource,
             workerLimit: (typeof input.workerLimit === "undefined") ? defVal.workerLimit : input.workerLimit,
             workerId: (typeof input.workerId === "undefined") ? defVal.workerId : input.workerId,
+            workerTaskId: (typeof input.workerId === "undefined") ? defVal.workerTaskId : input.workerTaskId,
+            workerTaskMode: (typeof input.workerTaskMode === "undefined") ? defVal.workerTaskMode : input.workerTaskMode,
 
             resetUserData: (typeof input.resetUserData === "undefined") ? defVal.resetUserData : input.resetUserData
 
@@ -2421,7 +2423,7 @@
 
                     if (_config.workerId === -1 && (mesh.material.map !== undefined && mesh.material.map !== null && mesh.material.image === undefined)) {
 
-                        log("bakingSetup() - Texture to load for Material-uuid: " + mesh.material.uuid);
+                        log("bakingSetup() - Texture to load for Material-UUID: " + mesh.material.uuid);
 
                         textureLoadingMechanism.push((function (pmaterial, ppath) {
 
@@ -2507,19 +2509,15 @@
                     }
 
                     // because we need faceVertexUv[ 1 ] (lightmapuvs) in our pathtracing Method in combination with Phong shading
-                    if (isReadyToCreateFaceVertexLightMapUv(mesh)) {
+                    //if (mesh.userData.baking.bakeMe && isReadyToCreateFaceVertexLightMapUv(mesh)) {
 
-                        if ((_config.appMode !== THREE.LightBaking.ApplicationExecutionEnum.MULTITHREADED) && (mesh.userData.baking.bakeMe || (_config.bakingMethod === THREE.LightBaking.BakingMethodEnum.PATHTRACING && _config.shading === THREE.LightBaking.ShadingEnum.PHONG))) {
+                    createFaceVertexLightMapUv(mesh);
 
-                            createFaceVertexLightMapUv(mesh);
+                    //} else {
 
-                        }
+                    //mesh.userData.baking.bakeMe = false;
 
-                    } else {
-
-                        mesh.userData.baking.bakeMe = false;
-
-                    }
+                    //}
 
                     // set material dependent attributes
                     if (mesh.userData.baking.bakeMe && mesh.material instanceof THREE.MeshBasicMaterial || mesh.material instanceof THREE.MeshPhongMaterial || mesh.material instanceof THREE.MeshLambertMaterial) {
@@ -2533,8 +2531,8 @@
                         }
 
 
-                        // -1 means no uv1 set
-                        if (mesh.userData.baking.faceEndOffset === undefined) {
+                        // undefined means no uv1 set
+                        if (mesh.userData.baking.faceEndOffset === -1 || mesh.userData.baking.faceEndOffset === undefined) {
 
                             mesh.userData.baking.faceEndOffset = (mesh.geometry.faceVertexUvs[1] !== undefined) ? mesh.geometry.faceVertexUvs[1].length : -1;
 
@@ -2559,7 +2557,6 @@
                                 }
 
                             }
-
 
                         }
 
@@ -3036,34 +3033,32 @@
 
                             cachedWorkerThreadPool.setOnTaskMessage(function (evt) {
 
-                                    if (evt.data.intent === THREE.LightBaking.WorkerTaskEnum.MESH) {
 
-                                        log("onWorkerFinished() - Mesh Mode");
+                                    log("onWorkerFinished() - Mesh Mode");
 
-                                        if (evt.data.texBuf !== undefined) {
+                                    if (evt.data.texBuf !== undefined) {
 
-                                            log("onWorkerFinished() - texBuf.Length: " + evt.data.texBuf.length + " meshUUID: " + evt.data.meshUUID + " finished: " + evt.data.finished);
+                                        log("onWorkerFinished() - texBuf.Length: " + evt.data.texBuf.length + " meshUUID: " + evt.data.meshUUID + " finished: " + evt.data.finished);
 
-                                            __sceneObjectsToBake.forEach(function (mesh) {
+                                        __sceneObjectsToBake.forEach(function (mesh) {
 
-                                                if (mesh.uuid === evt.data.meshUUID) {
+                                            if (mesh.uuid === evt.data.meshUUID) {
 
-                                                    mesh.geometry.faceVertexUvs[1] = evt.data.uvLightmap;
-                                                    mesh.userData.baking.uvInfo = evt.data.uvInfo;
+                                                mesh.geometry.faceVertexUvs[1] = evt.data.uvLightmap;
+                                                mesh.userData.baking.uvInfo = evt.data.uvInfo;
 
-                                                    updateLightMapTextureOnMesh(evt.data.texBuf, mesh, mesh.userData.baking.textureWidth, mesh.userData.baking.textureHeight);
+                                                updateLightMapTextureOnMesh(evt.data.texBuf, mesh, mesh.userData.baking.textureWidth, mesh.userData.baking.textureHeight);
 
-                                                    __onMeshBaked.forEach(function (f) {
+                                                __onMeshBaked.forEach(function (f) {
 
-                                                        f(mesh);
+                                                    f(mesh);
 
-                                                    });
+                                                });
 
-                                                }
+                                            }
 
-                                            });
+                                        });
 
-                                        }
                                     }
 
                                 }

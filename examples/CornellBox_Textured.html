@@ -2,6 +2,10 @@
 <html>
 <head>
     <title>Baked Cornell Box Textured</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
         body {
             font-family: Monospace;
@@ -20,6 +24,7 @@
 <script src="../js/LightBaking.js"></script>
 <script src="../js/packer.growing.js"></script>
 <script src="../js/TrackballControls.js"></script>
+<script src="../js/dat.gui.min.js"></script>
 <script src="../js/LightBakingDemo.js"></script>
 
 <script>
@@ -36,6 +41,7 @@
     var lightBaking;
 
     init();
+    demoInit();
     animate();
 
 
@@ -50,20 +56,17 @@
         camera.position.y = 15;
 //        camera.up = new THREE.Vector3(0,1,0);
 
-        // LIGHT
-
-        var light = new THREE.AreaLight( 0xFFFFFF, 1.0 );
-        light.position.set( 0, 9, 0 );
-        light.width = 10;
-        light.height = 1;
-        scene.add( light );
-
-
         // MESHES
         createScene();
 
+        // RENDERER
+        renderer = new THREE.WebGLRenderer();
+        renderer.setClearColor( 0xffffff );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
+
         // CONTROLS
-        controls = new THREE.TrackballControls( camera );
+        controls = new THREE.TrackballControls( camera, renderer.domElement );
 
         controls.rotateSpeed = 1.0;
         controls.zoomSpeed = 1.2;
@@ -79,20 +82,50 @@
 
         controls.addEventListener( 'change', render );
 
-        // RENDERER
-        renderer = new THREE.WebGLRenderer();
-        renderer.setClearColor( 0xffffff );
-        renderer.setSize( window.innerWidth, window.innerHeight );
-
-        document.body.appendChild( renderer.domElement );
-
 
         window.addEventListener( 'resize', onWindowResize, false );
 
         render();
     }
 
+    function demoInit(){
+
+        lightBakingDemo = lightBakingDemo({
+
+            "debugText": true,
+
+            "textureWidth": 512,
+            "textureHeight": 512,
+
+            "uvMethod": THREE.LightBaking.UVMethodEnum.PACKED,
+
+            "workerSource": "../js/LightBakingWorker.js",
+            "appMode": THREE.LightBaking.ApplicationExecutionEnum.MULTITHREADED,
+            "bakingMethod": THREE.LightBaking.BakingMethodEnum.PATHTRACING,
+            "samples": 20,
+            "pathTracingRecLevel": 2,
+            "giIntensity": 5,
+
+            "shading": THREE.LightBaking.ShadingEnum.PHONG,
+
+            "softShadows": true,
+
+            "postProcessingFilter": THREE.LightBaking.FilterEnum.NONE,
+
+            "scene": scene
+        });
+
+    }
+
     function createScene() {
+
+        // LIGHT
+
+        var light = new THREE.AreaLight( 0xFFFFFF, 1.0 );
+        light.position.set( 0, 9, 0 );
+        light.width = 10;
+        light.height = 1;
+        scene.add( light );
 
         var texture;
 
@@ -204,29 +237,7 @@
 
     function bakeScene() {
 
-        lightBaking = new THREE.LightBaking( {
-            "debugText": true,
-
-            "textureWidth": 512,
-            "textureHeight": 512,
-
-            "uvMethod": THREE.LightBaking.UVMethodEnum.PACKED,
-
-            "workerSource": "../js/LightBakingWorker.js",
-            "appMode": THREE.LightBaking.ApplicationExecutionEnum.MULTITHREADED,
-            "bakingMethod": THREE.LightBaking.BakingMethodEnum.PATHTRACING,
-            "samples": 20,
-            "pathTracingRecLevel": 2,
-            "giIntensity": 5,
-
-            "shading": THREE.LightBaking.ShadingEnum.PHONG,
-
-            "softShadows": true,
-
-            "postProcessingFilter": THREE.LightBaking.FilterEnum.NONE,
-
-            "scene": scene
-        } );
+        lightBaking = THREE.LightBaking(lightBakingDemo.getRunParams());
         lightBaking.run(lightBakingDemo.lightBakingRun);
 
     }
