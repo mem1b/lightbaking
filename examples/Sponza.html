@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Baked Sponza</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            font-family: Monospace;
+            background-color: #f0f0f0;
+            margin: 0px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+
+<script src="../js/three.js"></script>
+<script src="../js/Octree.js"></script>
+<script src="../js/jszip.min.js"></script>
+<script src="../js/jszip-utils.js"></script>
+<script src="../js/LightBaking.js"></script>
+<script src="../js/packer.growing.js"></script>
+<script src="../js/TrackballControls.js"></script>
+
+<script src="../js/MTLLoader.js"></script>
+<script src="../js/OBJMTLLoader.js"></script>
+<script src="../js/DDSLoader.js"></script>
+
+<script>
+    "use strict";
+
+    var camera;
+    var scene;
+    var renderer;
+    var controls;
+    var thickness = 0.25;
+    var height = 12;
+    var width = 10;
+    var length = 10;
+    var lightBaking;
+
+    init();
+    animate();
+
+
+    function init() {
+
+        // SCENE
+        scene = new THREE.Scene();
+
+        // MESHES
+        createScene();
+
+        // CONTROLS
+        controls = new THREE.TrackballControls(camera);
+
+        controls.rotateSpeed = 1.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+
+        controls.noZoom = false;
+        controls.noPan = false;
+
+        controls.staticMoving = true;
+        controls.dynamicDampingFactor = 0.3;
+
+        controls.keys = [65, 83, 68];
+
+        controls.addEventListener('change', render);
+
+        // RENDERER
+        renderer = new THREE.WebGLRenderer();
+        renderer.setClearColor(0xffffff);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        document.body.appendChild(renderer.domElement);
+
+
+        window.addEventListener('resize', onWindowResize, false);
+
+        render();
+    }
+
+
+    function createScene() {
+
+        // CAMERA
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+        camera.position.z = -4;
+        camera.position.y = 0;
+
+        var light = new THREE.PointLight(0xFFFFFF, 1.0);
+        light.userData.radius = 1;
+        light.position.set(0, 2, 0);
+        light.physicalAttenuation = true;
+        scene.add(light);
+
+
+        var MeshBasicMaterial = new THREE.MeshBasicMaterial({color: 0x808080});
+
+
+        var onProgress = function (xhr) {
+            if (xhr.lengthComputable) {
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log(Math.round(percentComplete, 2) + '% downloaded');
+            }
+        };
+
+        var onError = function (xhr) {
+        };
+
+
+        var loader = new THREE.OBJMTLLoader();
+        loader.load('../obj/sponza_01/sponza.obj', '../obj/sponza_01/sponza.mtl', function (object) {
+//            object.position.y = 0;
+//            object
+//            object.scale.x = 0.01;
+//            object.scale.y = 0.01;
+//            object.scale.z = 0.01;
+//            debugger;
+            var toadd = [];
+            object.children.forEach(function (elem) {
+                if (elem.geometry.faces.length !== 0) {
+                    toadd.push(elem);
+                }
+            });
+            toadd.forEach(function (elem) {
+                scene.add(elem);
+            });
+            debugger;
+
+//            scene.add( object );
+//            object.children[1 ].material = new THREE.MeshBasicMaterial({color:0xff0000});
+            render();
+
+            bakeScene()
+        }, onProgress, onError);
+
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+    }
+
+    function render() {
+        if (renderer !== undefined) {
+            renderer.render(scene, camera);
+        }
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        controls.handleResize();
+        render();
+    }
+
+
+    function bakeScene() {
+
+
+        lightBaking = new THREE.LightBaking({
+            "debugText": true,
+
+            "textureWidth": 256,
+            "textureHeight": 256,
+
+            "uvMethod": THREE.LightBaking.UVMethodEnum.PACKED,
+
+            "raycasterImplementation": THREE.LightBaking.RayCasterEnum.THREEJS,
+
+            "appMode": THREE.LightBaking.ApplicationExecutionEnum.MULTITHREADED,
+            "bakingMethod": THREE.LightBaking.BakingMethodEnum.PATHTRACING,
+            "pathTracingSamples": 1,
+            "pathTracingRecLevel": 0,
+            "giIntensity": 5,
+
+
+            "shading": THREE.LightBaking.ShadingEnum.PHONG,
+
+            "softShadows": false,
+
+            "postProcessingFilter": THREE.LightBaking.FilterEnum.NONE,
+
+            "scene": scene
+        });
+
+        lightBaking.run(function () {
+            lightBaking.setOnMeshBaked(function () {
+
+                lightBaking.log("setOnMeshBaked() called - & calling render()");
+                render();
+
+            });
+        });
+
+
+    }
+
+
+</script>
+
+
+</body>
+</html>
