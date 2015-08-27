@@ -4,24 +4,37 @@
 
 var lightBakingDemo = function (plbparams) {
     var tracker;
-    var runConfig;
-    var lbparams = plbparams;
 
+    var startMsg = "<a onclick=\"bakeScene()\" href=\"#\"><b>Start baking!</b><\a>";
+    var importLMMsg = "<input type=\"file\" id=\"fileElem\" multiple accept=\"zip/*\" style=\"display:none\" onchange=\"lightBakingDemo.handleFiles(this.files)\" single>" +
+        "<a href=\"#\" id=\"fileSelect\">Select lightmap files</a>";
+    var previewMsg = "<a onclick=\"lightBaking.debugLightMaps()\" href=\"#\">Display Lightmaps<\a>";
+    var exportLMMsg = "<a onclick=\"lightBaking.exportLightMaps()\" href=\"#\">Export Lightmaps<\a>";
+    var resetCamMsg = "<a onclick=\"controls.reset()\" href=\"#\">Reset Camera<\a>";
 
-    runConfig = (function () {
+    // create datgui object and it's settings
+    var datguiWrapper = (function (lbparams) {
 
-        function getRunParams() {
+        var lightBakingConfig;
+        var lightBakingDatGui = new dat.GUI();
+
+        function getDatGui() {
+
+            return lightBakingDatGui;
+
+        }
+
+        function getLightBakingConfig() {
 
             return lightBakingConfig.runParams;
 
         }
 
-        var lightbakingDatguiConfig = function () {
-
-            var defParams = THREE.LightBaking.parse(lbparams, THREE.LightBaking.getDefaultConfig());
+        // function descriptor?
+        var lightbakingDatguiConfig = function (defParams, scene) {
 
             this.runParams = JSON.parse(JSON.stringify(defParams));
-            this.runParams.scene = lbparams.scene;
+            this.runParams.scene = scene;
 
             this.appMode = defParams.appMode;
             this.workerLimit = defParams.workerLimit;
@@ -47,91 +60,136 @@ var lightBakingDemo = function (plbparams) {
 
         };
 
-        var box3Gui = new dat.GUI();
-        var lightBakingFolder = box3Gui.addFolder('Lightbaking options');
-        var lightBakingConfig = new lightbakingDatguiConfig();
-        lightBakingFolder.open();
+        function setNewLightBakingConfig(defParams, scene) {
 
-        // Main FOLDER
-        lightBakingFolder.add(lightBakingConfig, 'appMode', THREE.LightBaking.ApplicationExecutionEnum).name("Execution Model").onChange(function () {
-            lightBakingConfig.runParams.appMode = parseInt(lightBakingConfig.appMode, 10);
-        });
-        lightBakingFolder.add(lightBakingConfig, 'workerLimit').name("Worker limit").onChange(function () {
-            lightBakingConfig.runParams.workerLimit = parseInt(lightBakingConfig.workerLimit, 10);
-        }).min(1).step(1);
+            if (lightBakingConfig === undefined) {
 
-        lightBakingFolder.add(lightBakingConfig, 'debugText').name("Debug Text").onChange(function () {
-            lightBakingConfig.runParams.debugText = lightBakingConfig.debugText;
-        });
-        lightBakingFolder.add(lightBakingConfig, 'textureSize').name("Lightmap size").onChange(function () {
-            lightBakingConfig.runParams.textureWidth = parseInt(lightBakingConfig.textureSize, 10);
-            lightBakingConfig.runParams.textureHeight = parseInt(lightBakingConfig.textureSize, 10);
-        }).min(2).step(1); // TODO STEP
+                lightBakingConfig = new lightbakingDatguiConfig(defParams, scene);
 
-        lightBakingFolder.add(lightBakingConfig, 'shading', THREE.LightBaking.ShadingEnum).name("Shading").onChange(function () {
-            lightBakingConfig.runParams.shading = parseInt(lightBakingConfig.shading, 10);
-        });
+            } else {
 
-        lightBakingFolder.add(lightBakingConfig, 'giIntensity').name("Intensity").onChange(function () {
-            lightBakingConfig.runParams.giIntensity = parseFloat(lightBakingConfig.giIntensity);
-        }).min(0);
+                lightBakingConfig.runParams = JSON.parse(JSON.stringify(defParams));
+                lightBakingConfig.runParams.scene = scene;
 
-        lightBakingFolder.add(lightBakingConfig, 'lightAttenuation').name("Light Attenuation").onChange(function () {
-            lightBakingConfig.runParams.lightAttenuation = lightBakingConfig.lightAttenuation;
-        });
+                lightBakingConfig.appMode = defParams.appMode;
+                lightBakingConfig.workerLimit = defParams.workerLimit;
+                lightBakingConfig.debugText = defParams.debugText;
+                lightBakingConfig.textureSize = defParams.textureHeight;
+                lightBakingConfig.shading = defParams.shading;
 
-        lightBakingFolder.add(lightBakingConfig, 'postProcessingFilter', THREE.LightBaking.FilterEnum).name("ImageProcessing").onChange(function () {
-            lightBakingConfig.runParams.postProcessingFilter = lightBakingConfig.postProcessingFilter;
-        });
+                lightBakingConfig.giIntensity = defParams.giIntensity;
+                lightBakingConfig.lightAttenuation = defParams.lightAttenuation;
 
-        // Path Tracing FOLDER
-        var ptFolder = lightBakingFolder.addFolder('Path Tracing');
-        ptFolder.open();
+                lightBakingConfig.postProcessingFilter = defParams.postProcessingFilter;
 
-        ptFolder.add(lightBakingConfig, 'samples').name("Samples").onChange(function () {
-            lightBakingConfig.runParams.samples = parseInt(lightBakingConfig.samples, 10);
-        }).min(0).step(1);
+                lightBakingConfig.uvMethod = defParams.uvMethod;
+                lightBakingConfig.packingOffset = defParams.packingOffset;
+                lightBakingConfig.uvSmoothing = defParams.uvSmoothing;
 
-        ptFolder.add(lightBakingConfig, 'pathTracingRecLevel').name("Recursion depth").onChange(function () {
-            lightBakingConfig.runParams.pathTracingRecLevel = parseInt(lightBakingConfig.pathTracingRecLevel,10);
-        }).min(0).step(1);
+                lightBakingConfig.samples = defParams.samples;
+                lightBakingConfig.pathTracingRecLevel = defParams.pathTracingRecLevel;
 
-        // SoftShadows
-        var ssFolder = lightBakingFolder.addFolder('Soft shadows');
-        ssFolder.close();
+                lightBakingConfig.softShadows = defParams.softShadows;
+                lightBakingConfig.softShadowSamples = defParams.softShadowSamples;
+                lightBakingConfig.softShadowIntensity = defParams.softShadowIntensity;
 
-        ssFolder.add(lightBakingConfig, 'softShadows').name("Enabled").onChange(function () {
-            lightBakingConfig.runParams.softShadows = lightBakingConfig.softShadows;
-        });
+            }
 
-        ssFolder.add(lightBakingConfig, 'softShadowSamples').name("Samples").onChange(function () {
-            lightBakingConfig.runParams.softShadowSamples = parseInt(lightBakingConfig.softShadowSamples,10);
-        }).min(0).step(1);
+        }
 
-        ssFolder.add(lightBakingConfig, 'softShadowIntensity').name("Intensity Factor").onChange(function () {
-            lightBakingConfig.runParams.softShadowIntensity = parseFloat(lightBakingConfig.softShadowIntensity);
-        }).min(0).step(1);
+        setNewLightBakingConfig(THREE.LightBaking.parse(lbparams, THREE.LightBaking.getDefaultConfig()), lbparams.scene);
 
-        // UV FOLDER
-        var uvFolder = lightBakingFolder.addFolder('UV related');
-        uvFolder.close();
+        // Lightbaking Options
+        (function () {
 
-        uvFolder.add(lightBakingConfig, 'uvMethod', THREE.LightBaking.UVMethodEnum).name("UV-Method").onChange(function () {
-            lightBakingConfig.runParams.uvMethod = parseInt(lightBakingConfig.uvMethod,10);
-        });
+            var lightBakingFolder = lightBakingDatGui.addFolder('Lightbaking options');
+            lightBakingFolder.open();
 
-        uvFolder.add(lightBakingConfig, 'packingOffset').name("Packing-Offset").onChange(function () {
-            lightBakingConfig.runParams.packingOffset = parseFloat(lightBakingConfig.packingOffset);
-        }).min(0).step(1);
+            // Main FOLDER
+            lightBakingFolder.add(lightBakingConfig, 'appMode', THREE.LightBaking.ApplicationExecutionEnum).name("Execution Model").onChange(function () {
+                lightBakingConfig.runParams.appMode = parseInt(lightBakingConfig.appMode, 10);
+            });
+            lightBakingFolder.add(lightBakingConfig, 'workerLimit').name("Worker limit").onChange(function () {
+                lightBakingConfig.runParams.workerLimit = parseInt(lightBakingConfig.workerLimit, 10);
+            }).min(1).step(1);
 
-        uvFolder.add(lightBakingConfig, 'uvSmoothing').name("Smoothing").onChange(function () {
-            lightBakingConfig.runParams.uvSmoothing = parseFloat(lightBakingConfig.uvSmoothing);
-        }).step(0.01);
+            lightBakingFolder.add(lightBakingConfig, 'debugText').name("Debug Text").onChange(function () {
+                lightBakingConfig.runParams.debugText = lightBakingConfig.debugText;
+            });
+            lightBakingFolder.add(lightBakingConfig, 'textureSize').name("Lightmap size").onChange(function () {
+                lightBakingConfig.runParams.textureWidth = parseInt(lightBakingConfig.textureSize, 10);
+                lightBakingConfig.runParams.textureHeight = parseInt(lightBakingConfig.textureSize, 10);
+            }).min(2).step(1); // TODO STEP
 
+            lightBakingFolder.add(lightBakingConfig, 'shading', THREE.LightBaking.ShadingEnum).name("Shading").onChange(function () {
+                lightBakingConfig.runParams.shading = parseInt(lightBakingConfig.shading, 10);
+            });
 
-        return getRunParams;
+            lightBakingFolder.add(lightBakingConfig, 'giIntensity').name("Intensity").onChange(function () {
+                lightBakingConfig.runParams.giIntensity = parseFloat(lightBakingConfig.giIntensity);
+            }).min(0);
 
-    })();
+            lightBakingFolder.add(lightBakingConfig, 'lightAttenuation').name("Light Attenuation").onChange(function () {
+                lightBakingConfig.runParams.lightAttenuation = lightBakingConfig.lightAttenuation;
+            });
+
+            lightBakingFolder.add(lightBakingConfig, 'postProcessingFilter', THREE.LightBaking.FilterEnum).name("ImageProcessing").onChange(function () {
+                lightBakingConfig.runParams.postProcessingFilter = lightBakingConfig.postProcessingFilter;
+            });
+
+            // Path Tracing FOLDER
+            var ptFolder = lightBakingFolder.addFolder('Path Tracing');
+            ptFolder.open();
+
+            ptFolder.add(lightBakingConfig, 'samples').name("Samples").onChange(function () {
+                lightBakingConfig.runParams.samples = parseInt(lightBakingConfig.samples, 10);
+            }).min(0).step(1);
+
+            ptFolder.add(lightBakingConfig, 'pathTracingRecLevel').name("Recursion depth").onChange(function () {
+                lightBakingConfig.runParams.pathTracingRecLevel = parseInt(lightBakingConfig.pathTracingRecLevel, 10);
+            }).min(0).step(1);
+
+            // SoftShadows
+            var ssFolder = lightBakingFolder.addFolder('Soft shadows');
+            ssFolder.close();
+
+            ssFolder.add(lightBakingConfig, 'softShadows').name("Enabled").onChange(function () {
+                lightBakingConfig.runParams.softShadows = lightBakingConfig.softShadows;
+            });
+
+            ssFolder.add(lightBakingConfig, 'softShadowSamples').name("Samples").onChange(function () {
+                lightBakingConfig.runParams.softShadowSamples = parseInt(lightBakingConfig.softShadowSamples, 10);
+            }).min(0).step(1);
+
+            ssFolder.add(lightBakingConfig, 'softShadowIntensity').name("Intensity Factor").onChange(function () {
+                lightBakingConfig.runParams.softShadowIntensity = parseFloat(lightBakingConfig.softShadowIntensity);
+            }).min(0).step(1);
+
+            // UV FOLDER
+            var uvFolder = lightBakingFolder.addFolder('UV related');
+            uvFolder.close();
+
+            uvFolder.add(lightBakingConfig, 'uvMethod', THREE.LightBaking.UVMethodEnum).name("UV-Method").onChange(function () {
+                lightBakingConfig.runParams.uvMethod = parseInt(lightBakingConfig.uvMethod, 10);
+            });
+
+            uvFolder.add(lightBakingConfig, 'packingOffset').name("Packing-Offset").onChange(function () {
+                lightBakingConfig.runParams.packingOffset = parseFloat(lightBakingConfig.packingOffset);
+            }).min(0).step(1);
+
+            uvFolder.add(lightBakingConfig, 'uvSmoothing').name("Smoothing").onChange(function () {
+                lightBakingConfig.runParams.uvSmoothing = parseFloat(lightBakingConfig.uvSmoothing);
+            }).step(0.01);
+
+        })();
+
+        return {
+            getLightBakingConfig: getLightBakingConfig,
+            setNewLightBakingConfig: setNewLightBakingConfig,
+            getDatGui: getDatGui
+        };
+
+    })(plbparams);
 
     // --- Tracker
     // bottom container
@@ -143,7 +201,6 @@ var lightBakingDemo = function (plbparams) {
     document.body.appendChild(container);
 
     // tracker
-
     tracker = document.createElement('div');
     tracker.style.width = '100%';
     tracker.style.padding = '10px';
@@ -156,11 +213,7 @@ var lightBakingDemo = function (plbparams) {
     }
 
     tracker.innerHTML = (function () {
-        var startMsg = "<a onclick=\"bakeScene()\" href=\"#\">Start baking!<\a>";
-        var downloadMsg = "<input type=\"file\" id=\"fileElem\" multiple accept=\"zip/*\" style=\"display:none\" onchange=\"lightBakingDemo.handleFiles(this.files)\" single>" +
-            "<a href=\"#\" id=\"fileSelect\">Select lightmap files</a>";
-
-        return startMsg + " - " + downloadMsg;
+        return startMsg + " - " + importLMMsg + " - " + resetCamMsg;
     })();
 
     (function () {
@@ -181,7 +234,35 @@ var lightBakingDemo = function (plbparams) {
     function importScene(url) {
 
         var lightBaking = THREE.LightBaking({scene: scene});
-        lightBaking.importLightMaps(url, function () {
+        lightBaking.importLightMaps(url, function (config) {
+
+            var gui = datguiWrapper.getDatGui();
+
+            datguiWrapper.setNewLightBakingConfig(THREE.LightBaking.parse(config, THREE.LightBaking.getDefaultConfig()), scene);
+
+            var iterate = function (folders) {
+
+                Object.keys(folders).forEach(function (key) {
+                    var folder = folders[key];
+                    var newFolders = Object.keys(folder.__folders);
+
+                    if (folder.__controllers !== undefined && folder.__controllers.length !== 0) {
+                        folder.__controllers.forEach(function (c) {
+                            c.updateDisplay();
+                        })
+                    }
+
+                    if (newFolders.length > 0) {
+                        newFolders.forEach(function (f) {
+                            iterate(folder.__folders);
+                        });
+                    }
+                });
+
+            };
+
+            iterate(gui.__folders);
+
             render();
             render();
         });
@@ -204,9 +285,7 @@ var lightBakingDemo = function (plbparams) {
 
         lightBaking.setOnMeshBaked(function () {
 
-            var msg = getMsg();
-
-            tracker.innerHTML = msg;
+            tracker.innerHTML = getMsg();
 
             lightBaking.log("setOnMeshBaked() called - & calling render()");
             render();
@@ -217,11 +296,7 @@ var lightBakingDemo = function (plbparams) {
         lightBaking.setAfterExecuted(function () {
 
             var timeMsg = " - " + ((Date.now() - tt0) / 1000) + "s";
-            var previewMsg = "<a onclick=\"lightBaking.debugLightMaps()\" href=\"#\">Display Lightmaps<\a>";
-            var downloadMsg = "<a onclick=\"lightBaking.exportLightMaps()\" href=\"#\">Export Lightmaps<\a>";
-            var resetCamMsg = "<a onclick=\"controls.reset()\" href=\"#\">Reset Camera<\a>";
-            var msg = getMsg() + timeMsg + " - " + previewMsg + " - " + downloadMsg + " - " + resetCamMsg;
-
+            var msg = startMsg + " - " + getMsg() + timeMsg + " - " + previewMsg + " - " + exportLMMsg + " - " + importLMMsg + " - " + resetCamMsg;
             tracker.innerHTML = msg;
 
         });
@@ -232,7 +307,7 @@ var lightBakingDemo = function (plbparams) {
     return {
         lightBakingRun: lightBakingRun,
         handleFiles: handleFiles,
-        getRunParams: runConfig
+        getLightBakingConfig: datguiWrapper.getLightBakingConfig
     };
 
 };

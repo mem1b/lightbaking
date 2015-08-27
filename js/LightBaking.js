@@ -111,14 +111,21 @@
 
     };
 
+    //---------------------------------------//
     // globally visble functions/constants
+    //---------------------------------------//
     (function () {
 
+        //---------------------------------------//
+        // class functions accessible to the outside
+        //---------------------------------------//
         THREE.LightBaking.parse = parse;
-
         THREE.LightBaking.getDefaultConfig = getDefaultConfig;
 
-        // someConstants
+        //---------------------------------------//
+        // some constants:::
+        //---------------------------------------//
+
         // Interpolation techniques
         THREE.LightBaking.ShadingEnum = {
             FLAT: 0,
@@ -1780,6 +1787,7 @@
 
                 try {
                     var zip = new JSZip(data);
+                    var config = JSON.parse((zip.files[_configFileName]).asText());
 
                     Object.keys(zip.files).forEach(function (key) {
 
@@ -1827,7 +1835,7 @@
 
                     if (onImported !== undefined) {
 
-                        onImported();
+                        onImported(config);
 
                     }
 
@@ -2417,7 +2425,23 @@
                     // root object: baking
                     if (mesh.userData.baking === undefined || (_config.workerId === -1 && _config.resetUserData)) {
 
+                        var bakeMe;
+                        var intersectMe;
+
+                        if (_config.resetUserData) {
+
+                            bakeMe = mesh.userData.baking.bakeMe;
+                            intersectMe = mesh.userData.baking.intersectMe;
+                        }
+
                         mesh.userData.baking = {};
+
+                        if (_config.resetUserData) {
+
+                            mesh.userData.baking.bakeMe = bakeMe;
+                            mesh.userData.baking.intersectMe = intersectMe;
+
+                        }
 
                     }
 

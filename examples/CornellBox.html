@@ -104,6 +104,8 @@
 
             "postProcessingFilter": THREE.LightBaking.FilterEnum.NONE,
 
+            "resetUserData": true,
+
             "scene": scene
         });
     }
@@ -208,7 +210,7 @@
         var g_dummybox = new THREE.BoxGeometry(2.5, 5, 2.5);
         var m_dummybox = new THREE.Mesh(g_dummybox, boxMaterial);
         m_dummybox.translateX(-width / 5);
-        m_dummybox.translateY(2.5);
+        m_dummybox.translateY(5);
         m_dummybox.rotateY(1);
         m_dummybox.userData.baking = {bakeMe: true};
         scene.add(m_dummybox);
@@ -237,7 +239,7 @@
 
     function bakeScene() {
 
-        lightBaking = THREE.LightBaking(lightBakingDemo.getRunParams());
+        lightBaking = THREE.LightBaking(lightBakingDemo.getLightBakingConfig());
         lightBaking.run(lightBakingDemo.lightBakingRun);
 
     }
