@@ -57,7 +57,7 @@ Include them in your html after the [THREE.js WebGL library](http://mrdoob.githu
 ```
 
 #### Minimal Config (Singlethreaded)
-```html
+```javascript
 lightBaking = THREE.LightBaking({
          "scene"": scene,
          "appMode": THREE.LightBaking.ApplicationExecutionEnum.SINGLETHREADED
@@ -65,7 +65,7 @@ lightBaking = THREE.LightBaking({
 ```
 
 #### Minimal Config (Multithreaded)
-```html
+```javascript
 lightBaking = THREE.LightBaking({
          "scene"": scene,
          "workerSource": "LightBakingWorker.js", //optional, only used if multithreading is enabled. Set the source of the LightBakingWorker.js file.
@@ -75,7 +75,7 @@ lightBaking = THREE.LightBaking({
 #### Parameter description
 All Parameters are listed with their default values.
 
-```html
+```javascript
 lightBaking = THREE.LightBaking( {
 
          // Scene Information
@@ -150,7 +150,7 @@ lightBaking = THREE.LightBaking( {
          // how to integrate over the hemisphere
          // direction for the rays [0-1],
          //   0: only in normal direction
-         //   1: 180° direction(ideal diffuse)
+         //   1: 180Â° direction(ideal diffuse)
          "importanceValue":1,
 
          // specificMeshBaking
@@ -206,13 +206,13 @@ lightBaking = THREE.LightBaking( {
 * to improve the pathtracing quality: the more samples the better the quality
 
 #### Import Scene
-```html
+```javascript
 var lightBaking = THREE.LightBaking( { scene: scene } );
 lightBaking.importLightMaps( "baked/Mailbox.zip" );
 ```
 #### Export Scene
 From developer Console:
-```html
+```javascript
 lightBaking.exportLightMaps()
 ```
 
